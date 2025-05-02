@@ -55,7 +55,7 @@ const SideBar = ({ showSidebar, setShowSide, setAuthorization }) => {
     >
       <div className="flex pl-[21px] h-[55px] items-center gap-3 border-b border-secondary">
         <div>
-          <img className="w-[160px]" src={Royal247Logo} alt="" />
+          <img className="w-[130px]" src={Royal247Logo} alt="" />
         </div>
         <button
           className="bg-gray-200 h-[25px] w-[25px] rounded-sm flex md:hidden justify-center ml-20 items-center"
