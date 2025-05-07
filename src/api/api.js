@@ -1,7 +1,8 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const BACKEND_URL = "https://backend.gpay.one";
+// const BACKEND_URL = "https://backend.gpay.one";
+const BACKEND_URL = "http://46.202.166.64:8015";
 export const PDF_READ_URL = "https://pdf.royal247.org/parse-statement";
 
 

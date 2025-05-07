@@ -1,21 +1,23 @@
-import { Input } from "antd";
-import Cookies from "js-cookie";
-import React, { useEffect, useState } from "react";
+import { Input, Select } from "antd";
 import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import Cookies from "js-cookie";
 import {
   fn_getAdminLoginHistoryApi,
   fn_updateApiKeys,
   fn_getApiKeys,
 } from "../../api/api";
 
+
 const SystemConfigurationIntegration = ({ authorization, showSidebar }) => {
 
   const navigate = useNavigate();
-  const containerHeight = window.innerHeight - 120;
-  const [loginData, setLoginData] = useState([]);
   const [apiKey, setApiKey] = useState("");
+  const [loginData, setLoginData] = useState([]);
   const [secretKey, setSecretKey] = useState("");
+  const containerHeight = window.innerHeight - 120;
   const [statusMessage, setStatusMessage] = useState("");
+  const [loginType, setLoginType] = useState("merchant");
 
   useEffect(() => {
     window.scroll(0, 0);
@@ -127,8 +129,19 @@ const SystemConfigurationIntegration = ({ authorization, showSidebar }) => {
 
         {/* Login History Section */}
         <div className="bg-white rounded-lg p-4 mt-6">
-          <div className="pb-3">
+          <div className="pb-3 flex justify-between items-center">
             <p className="text-black text-[14px] font-[600]">Login History</p>
+            <div className="flex gap-3">
+              <Select
+                defaultValue="merchant"
+                style={{ width: 200 }}
+                onChange={(value) => setLoginType(value)}
+                options={[
+                  { value: 'merchant', label: 'Merchant Login History' },
+                  { value: 'staff', label: 'Staff Login History' },
+                ]}
+              />
+            </div>
           </div>
           <div className="overflow-x-auto rounded-lg border border-gray-300">
             <table className="min-w-full">

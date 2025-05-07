@@ -59,6 +59,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
   const [selectedOption, setSelectedOption] = useState(null);
   const [allBanks, setAllBanks] = useState([]);
   const [selectedFilteredBank, setSelectedFilteredBank] = useState("");
+  const [newStatus, setNewStatus] = useState(null);
 
   const fetchMerchants = async () => {
     try {
@@ -278,8 +279,24 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
   ]);
 
   const handleViewTransaction = (transaction) => {
+    // Reset all states first
+    setNewStatus(null);
+    setDeclinedButtonClicked(false);
+    setSelectedOption(null);
+    setIsEdit(false);
+    // Then set the new transaction
     setSelectedTransaction(transaction);
     setOpen(true);
+  };
+
+  // Add a new function to handle modal close
+  const handleModalClose = () => {
+    setOpen(false);
+    setIsEdit(false);
+    setNewStatus(null);
+    setDeclinedButtonClicked(false);
+    setSelectedOption(null);
+    setSelectedTransaction(null);
   };
 
   const handleTransactionAction = async (action, transactionId) => {
@@ -290,7 +307,15 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
       transactionReason: selectedOption,
     });
     if (response.status) {
-      fetchTransactions(currentPage);
+      // Fetch updated transactions
+      await fetchTransactions(currentPage, merchant);
+      // Fetch all transactions for the report
+      await fetchAllTransactions(merchant);
+      // Update the selected transaction in the modal
+      const updatedTransaction = transactions.find(t => t._id === transactionId);
+      if (updatedTransaction) {
+        setSelectedTransaction(updatedTransaction);
+      }
       notification.success({
         message: "Success",
         description: "Transaction Updated!",
@@ -298,6 +323,9 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
       });
       setIsEdit(false);
       setOpen(false);
+      setNewStatus(null);
+      setDeclinedButtonClicked(false);
+      setSelectedOption(null);
     } else {
       setIsEdit(false);
       console.error(`Failed to ${action} transaction:`, response.message);
@@ -882,14 +910,8 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
         }}
         title={<p className="text-[20px] font-[700]">Transaction Details</p>}
         open={open}
-        onCancel={() => {
-          setOpen(false);
-          setIsEdit(false);
-        }}
-        onClose={() => {
-          setOpen(false);
-          setIsEdit(false);
-        }}
+        onCancel={handleModalClose}
+        onClose={handleModalClose}
       >
         {selectedTransaction && (
           <div className="flex flex-col md:flex-row">
@@ -1058,7 +1080,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                 </div>
               ) : null}
 
-              {declineButtonClicked && (
+              {(declineButtonClicked || newStatus === "Decline") && (
                 <>
                   <p className="text-[14px] font-[700]">
                     Select Reason for Decline
@@ -1094,27 +1116,71 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                             placement: "topRight",
                           });
                           return;
-                        } else {
-                          handleTransactionAction(
-                            "Decline",
-                            selectedTransaction?._id
-                          );
-                          setDeclinedButtonClicked(!declineButtonClicked);
                         }
+                        handleTransactionAction(
+                          newStatus || "Decline",
+                          selectedTransaction?._id
+                        );
+                        setNewStatus(null);
+                        setDeclinedButtonClicked(false);
+                        setSelectedOption(null);
                       }}
                     >
                       Submit
                     </button>
                     <button
                       className="bg-gray-200 flex text-black py-2 px-[20px] rounded text-[13px] w-[max-content]"
-                      onClick={() =>
-                        setDeclinedButtonClicked(!declineButtonClicked)
-                      }
+                      onClick={() => {
+                        setNewStatus(null);
+                        setDeclinedButtonClicked(false);
+                        setSelectedOption(null);
+                      }}
                     >
                       Cancel
                     </button>
                   </div>
                 </>
+              )}
+              
+              {/* Update transaction status */}
+              {selectedTransaction?.status !== "Pending" && Cookies.get('type') === "admin" && (
+                <div className="flex flex-col mt-6">
+                  <div className="flex items-center gap-3">
+                    <p className="text-[14px] font-[700] text-nowrap">Update Status:</p>
+                    <Select
+                      key={selectedTransaction?._id}
+                      style={{ width: 200 }}
+                      placeholder="Select new status"
+                      value={newStatus}
+                      onChange={(value) => {
+                        setNewStatus(value);
+                        if (value === "Decline") {
+                          setDeclinedButtonClicked(true);
+                        } else {
+                          setDeclinedButtonClicked(false);
+                          setSelectedOption(null);
+                        }
+                      }}
+                    >
+                      {selectedTransaction?.status === "Approved" ? (
+                        <Select.Option value="Decline">Decline</Select.Option>
+                      ) : selectedTransaction?.status === "Decline" ? (
+                        <Select.Option value="Approved">Approve</Select.Option>
+                      ) : null}
+                    </Select>
+                  </div>
+                  {newStatus && newStatus !== "Decline" && (
+                    <button
+                      className="bg-[#03996933] flex text-[#039969] p-1.5 rounded hover:bg-[#03996950] text-[13px] mt-3 w-fit"
+                      onClick={() => {
+                        handleTransactionAction(newStatus, selectedTransaction?._id);
+                        setNewStatus(null);
+                      }}
+                    >
+                      Update Status
+                    </button>
+                  )}
+                </div>
               )}
             </div>
             {/* Right side with border and image */}
