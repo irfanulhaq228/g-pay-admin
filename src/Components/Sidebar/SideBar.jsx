@@ -20,6 +20,7 @@ const SideBar = ({ showSidebar, setShowSide, setAuthorization }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const loginType = Cookies.get('type');
+  const staffType = Cookies.get('staffType');
   const isMobile = () => window.innerWidth < 1024;
   const [selectedPage, setSelectedPage] = useState("");
 
@@ -43,6 +44,7 @@ const SideBar = ({ showSidebar, setShowSide, setAuthorization }) => {
     Cookies.remove('adminId');
     Cookies.remove('token');
     Cookies.remove('type');
+    Cookies.remove('staffType');
     setAuthorization(false);
     navigate("/login");
   }
@@ -75,14 +77,16 @@ const SideBar = ({ showSidebar, setShowSide, setAuthorization }) => {
           />
         )}
         {/* transactions */}
+        {(staffType === "transaction" || loginType === "admin") && (
         <Menu
           onClick={() => handleMenuClick("transactions", "/transactions")}
           label="Transactions"
           icon={<PiNotebook className="text-[20px]" />}
           isActive={selectedPage === "transactions"}
         />
+        )}
         {/* withdraw request */}
-        {loginType === "admin" && (
+        {(staffType === "withdraw" || loginType === "admin") && (
           <Menu
             onClick={() =>
               handleMenuClick("withdraw", "/withdraw")

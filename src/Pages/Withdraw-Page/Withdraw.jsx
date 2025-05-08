@@ -46,6 +46,8 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
     const [merchantWallet, setMerchantWallet] = useState(null);
     const [selectedMerchant, setSelectedMerchant] = useState(null);
     const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
+    const [qrCodeImage, setQrCodeImage] = useState(null);
+    const [qrCodePreview, setQrCodePreview] = useState(null);
 
     useEffect(() => {
         window.scroll(0, 0);
@@ -137,6 +139,8 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
         setSelectedBank(null);
         setWithdrawAmount('');
         setSelectedMerchant(null);
+        setQrCodeImage(null);
+        setQrCodePreview(null);
     };
 
     const handleWithdrawSubmit = async () => {
@@ -164,22 +168,34 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
             });
         }
 
-        const data = {
-            amount: ((parseFloat(withdrawAmount) - (parseFloat(exchangeData?.charges) * parseFloat(withdrawAmount)) / 100) / parseFloat(exchangeData?.rate)).toFixed(2),
-            withdrawBankId: exchange === "67c1e65de5d59894e5a19435" ? selectedBank : null,
-            note: note,
-            exchangeId: exchange,
-            amountINR: withdrawAmount,
-            merchantId: selectedMerchant,
-            createdBy: "admin"
-        };
+        if (exchangeData?.label === "USDT" && !qrCodeImage) {
+            return notification.error({
+                message: "Error",
+                description: "Please upload USDT QR code",
+                placement: "topRight",
+            });
+        }
+
+        const formData = new FormData();
+        formData.append("amount", ((parseFloat(withdrawAmount) - (parseFloat(exchangeData?.charges) * parseFloat(withdrawAmount)) / 100) / parseFloat(exchangeData?.rate)).toFixed(2));
+        if (exchange === "67c1e65de5d59894e5a19435" && selectedBank) {
+            formData.append("withdrawBankId", selectedBank);
+        }
+        formData.append("note", note);
+        formData.append("exchangeId", exchange);
+        formData.append("amountINR", withdrawAmount);
+        formData.append("merchantId", selectedMerchant);
+        formData.append("createdBy", "admin");
+        if (qrCodeImage) {
+            formData.append("image", qrCodeImage);
+        }
 
         try {
             const token = Cookies.get("token");
-            const response = await axios.post(`${BACKEND_URL}/withdraw/create`, data, {
+            const response = await axios.post(`${BACKEND_URL}/withdraw/create`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json"
+                    "Content-Type": "multipart/form-data"
                 },
             });
             if (response?.status === 200) {
@@ -266,6 +282,15 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
             setImage(file);
             const previewUrl = URL.createObjectURL(file);
             setImagePreview(previewUrl);
+        }
+    };
+
+    const handleQrCodeChange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setQrCodeImage(file);
+            const previewUrl = URL.createObjectURL(file);
+            setQrCodePreview(previewUrl);
         }
     };
 
@@ -637,103 +662,6 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                     </div>
                 )}
             </Modal>
-            {/* 
-            <Modal
-                title="Withdraw Request"
-                open={withdrawModalOpen}
-                onOk={handleWithdrawSubmit}
-                onCancel={() => { setWithdrawModalOpen(false);
-                    resetForm();
-                }}
-                okText="Submit"
-                cancelText="Cancel"
-            >
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Select Merchant
-                        </label>
-                        <Select
-                            style={{ width: '100%' }}
-                            placeholder="Select Merchant"
-                            value={selectedMerchant}
-                            onChange={(value) => setSelectedMerchant(value)}
-                            options={merchants}
-                            showSearch
-                            filterOption={(input, option) => option?.label.toLowerCase().includes(input.toLowerCase())}
-                        />
-                        <p className="text-gray-500 text-[13px] font-[500]">Avaiable for Withdraw: <span className="text-green-500">{merchantWallet?.pendingAmount?.toFixed(2) || 0} INR</span></p>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Amount
-                        </label>
-                        <Input
-                            prefix={<FaIndianRupeeSign />}
-                            type="number"
-                            placeholder="Enter amount"
-                            value={withdrawAmount}
-                            onChange={(e) => setWithdrawAmount(e.target.value)}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Exchange
-                        </label>
-                        <Select
-                            style={{ width: '100%' }}
-                            placeholder="Select Exchange"
-                            value={exchange}
-                            onChange={handleExchangeChange}
-                            options={exchanges}
-                        />
-                    </div>
-
-                    {exchange && (
-                        <div>
-                            <p className="text-[12px] font-[500] flex items-center"><span className="text-gray-400 w-[150px] block">Exchange Rate:</span>{" "}1 {exchangeData?.label} = {exchangeData?.rate} INR</p>
-                            <p className="text-[12px] font-[500] flex items-center"><span className="text-gray-400 w-[150px] block">Exchange Charges:</span>{" "}{exchangeData?.charges}%</p>
-                            <p className="text-[13px] font-[500] flex items-center text-green-500">
-                                <span className="text-gray-500 w-[150px] block">Withdrawal Amount:</span>
-                                {" "}
-                                {((parseFloat(withdrawAmount) - (parseFloat(exchangeData?.charges) * parseFloat(withdrawAmount)) / 100) / parseFloat(exchangeData?.rate)).toFixed(2)}
-                                {" "}
-                                {exchangeData?.label === "Bank/UPI" ? "INR" : exchangeData?.label === "By Cash" ? "INR" : exchangeData?.label}
-                            </p>
-                        </div>
-                    )}
-
-                    {exchange === "67c1e65de5d59894e5a19435" && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Select Bank
-                            </label>
-                            <Select
-                                style={{ width: '100%' }}
-                                placeholder="Select Your Bank"
-                                onChange={(value) => setSelectedBank(value)}
-                                value={selectedBank}
-                                options={banks}
-                                loading={!banks.length}
-                            />
-                        </div>
-                    )}
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Note
-                        </label>
-                        <TextArea
-                            placeholder="Write anything about Transaction"
-                            autoSize={{ minRows: 4, maxRows: 8 }}
-                            value={note}
-                            onChange={(e) => setNote(e.target.value)}
-                        />
-                    </div>
-                </div>
-            </Modal> */}
 
             <Modal
                 title="Withdraw Request"
@@ -818,6 +746,30 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                 showSearch
                                 filterOption={(input, option) => option?.label.toLowerCase().includes(input.toLowerCase())}
                             />
+                        </div>
+                    )}
+
+                    {exchangeData?.label === "USDT" && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Upload QR Code
+                            </label>
+                            <input
+                                type="file"
+                                onChange={handleQrCodeChange}
+                                accept="image/*"
+                                className="mb-2"
+                            />
+                            {qrCodePreview && (
+                                <div className="mt-2">
+                                    <p className="text-gray-600 text-[12px] font-[600] mb-1">QR Code Preview:</p>
+                                    <img
+                                        src={qrCodePreview}
+                                        alt="QR Code Preview"
+                                        className="max-w-[200px] h-auto rounded-lg border"
+                                    />
+                                </div>
+                            )}
                         </div>
                     )}
 

@@ -300,12 +300,21 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
   };
 
   const handleTransactionAction = async (action, transactionId) => {
-    const response = await fn_updateTransactionStatusApi(transactionId, {
+    const adminId = Cookies.get('adminId');
+    const userType = Cookies.get('type');
+    
+    const payload = {
       status: action,
-      trnStatus:
-        action === "Approved" ? "Points Pending" : "Transaction Decline",
+      trnStatus: action === "Approved" ? "Points Pending" : "Transaction Decline",
       transactionReason: selectedOption,
-    });
+    };
+
+    // Add adminStaffId to payload if user type is staff
+    if (userType === "staff") {
+      payload.adminStaffId = adminId;
+    }
+
+    const response = await fn_updateTransactionStatusApi(transactionId, payload);
     if (response.status) {
       // Fetch updated transactions
       await fetchTransactions(currentPage, merchant);
@@ -1179,6 +1188,13 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                     >
                       Update Status
                     </button>
+                  )}
+                  {selectedTransaction && (
+                    <div className="flex items-center mt-3">
+                      <p className="text-[14px] font-[600]">
+                        Updated By: <span className="font-[500] ml-4">{selectedTransaction?.adminStaffId?.userName || "Admin"}</span>
+                      </p>
+                    </div>
                   )}
                 </div>
               )}

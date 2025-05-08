@@ -31,10 +31,15 @@ const Login = ({ authorization, setAuthorization }) => {
         Cookies.set("token", response?.token);
         Cookies.set("adminId", response?.id);
         Cookies.set("type", response?.type);
+        Cookies.set("staffType", response?.staffType);
         if (response?.type === "admin") {
           navigate("/");
         } else {
+          if (response?.staffType === "transaction") {
           navigate("/transactions");
+          }else{
+            navigate("/withdraw");
+          }
         }
         setAuthorization(true);
       } else {

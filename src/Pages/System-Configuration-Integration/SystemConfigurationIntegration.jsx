@@ -2,36 +2,65 @@ import { Input, Select } from "antd";
 import { useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
+import axios from "axios";
 import {
   fn_getAdminLoginHistoryApi,
   fn_updateApiKeys,
   fn_getApiKeys,
+  fn_getMerchantApi,
 } from "../../api/api";
-
+import BACKEND_URL from "../../api/api";
 
 const SystemConfigurationIntegration = ({ authorization, showSidebar }) => {
-
   const navigate = useNavigate();
   const [apiKey, setApiKey] = useState("");
   const [loginData, setLoginData] = useState([]);
   const [secretKey, setSecretKey] = useState("");
   const containerHeight = window.innerHeight - 120;
   const [statusMessage, setStatusMessage] = useState("");
-  const [loginType, setLoginType] = useState("merchant");
+  const [merchants, setMerchants] = useState([]);
+  const [staff, setStaff] = useState([]);
+  const [selectedMerchant, setSelectedMerchant] = useState(null);
+  const [selectedStaff, setSelectedStaff] = useState(null);
+  const token = Cookies.get("token");
 
   useEffect(() => {
     window.scroll(0, 0);
     if (!authorization) {
       navigate("/login");
     } else {
-      fetchAdminLoginHistory();
+      fetchAdminLoginHistory(null, null);
       fetchApiKeys();
+      fetchMerchants();
+      fetchStaff();
     }
   }, [authorization]);
 
-  const fetchAdminLoginHistory = async () => {
-    const adminId = Cookies.get("adminId");
-    const response = await fn_getAdminLoginHistoryApi(adminId);
+  const fetchMerchants = async () => {
+    const response = await fn_getMerchantApi();
+    if (response?.status) {
+      setMerchants(response?.data?.data || []);
+    }
+  };
+
+  const fetchStaff = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/adminStaff/getAll`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (response?.status === 200) {
+        setStaff(response?.data?.data || []);
+      }
+    } catch (error) {
+      console.log("error while fetching staff ", error);
+    }
+  };
+
+  const fetchAdminLoginHistory = async (staffId, merchantId) => {
+    let response = await fn_getAdminLoginHistoryApi(staffId, merchantId);
     if (response?.status) {
       setLoginData(response?.data || []);
     } else {
@@ -133,12 +162,35 @@ const SystemConfigurationIntegration = ({ authorization, showSidebar }) => {
             <p className="text-black text-[14px] font-[600]">Login History</p>
             <div className="flex gap-3">
               <Select
-                defaultValue="merchant"
                 style={{ width: 200 }}
-                onChange={(value) => setLoginType(value)}
+                placeholder="Select Merchant"
+                onChange={(value) => {
+                  setSelectedMerchant(value);
+                  setSelectedStaff(null);
+                  fetchAdminLoginHistory(null, value);
+                }}
                 options={[
-                  { value: 'merchant', label: 'Merchant Login History' },
-                  { value: 'staff', label: 'Staff Login History' },
+                  { value: 'all', label: 'All Merchants' },
+                  ...merchants.map(merchant => ({
+                    value: merchant._id,
+                    label: merchant.merchantName
+                  }))
+                ]}
+              />
+              <Select
+                style={{ width: 200 }}
+                placeholder="Select Staff"
+                onChange={(value) => {
+                  setSelectedStaff(value);
+                  setSelectedMerchant(null);
+                  fetchAdminLoginHistory(value, null);
+                }}
+                options={[
+                  { value: 'all', label: 'All Staff' },
+                  ...staff.map(staffMember => ({
+                    value: staffMember._id,
+                    label: staffMember.userName
+                  }))
                 ]}
               />
             </div>
@@ -148,9 +200,7 @@ const SystemConfigurationIntegration = ({ authorization, showSidebar }) => {
               <thead>
                 <tr className="bg-[#ECF0FA] text-left text-[12px] text-gray-700">
                   <th className="p-4">Login Date & Time</th>
-                  {/* <th className="p-4">Logout Date & Time</th> */}
                   <th className="p-4">IP Address</th>
-                  {/* <th className="p-4">ISP</th> */}
                   <th className="p-4">City</th>
                 </tr>
               </thead>
@@ -159,17 +209,15 @@ const SystemConfigurationIntegration = ({ authorization, showSidebar }) => {
                   loginData.map((entry, index) => (
                     <tr key={index} className="text-gray-800 text-sm border-b">
                       <td className="p-4">{entry.loginDate || "-"}</td>
-                      {/* <td className="p-4">{entry.logoutDate || "-"}</td> */}
                       <td className="p-4">
                         {entry.ip?.split("::ffff:")[1] || "-"}
                       </td>
-                      {/* <td className="p-4">{entry.isp || "-"}</td> */}
                       <td className="p-4">{entry.city || "-"}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="text-center p-4 text-gray-500">
+                    <td colSpan="3" className="text-center p-4 text-gray-500">
                       No login history available.
                     </td>
                   </tr>

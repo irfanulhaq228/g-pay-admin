@@ -1,7 +1,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 import React, { useEffect, useState } from "react";
-import { Button, Modal, Input, Select, Switch, notification } from "antd";
+import { Button, Modal, Input, Select, Switch, notification, Radio } from "antd";
 
 import { FiTrash2 } from "react-icons/fi";
 import { FaExclamationCircle } from "react-icons/fa";
@@ -20,10 +20,11 @@ const Staff = ({ showSidebar }) => {
     const [merchantOptions, setMerchantOption] = useState([]);
     const [editModal, setEditModal] = useState(false);
     const [loader, setLoader] = useState(false);
+    const [staffType, setStaffType] = useState("transaction");
     const transactionTypeOptions = [{ label: "Manual Transaction", value: "manual" }, { label: "Direct Payment", value: "direct" }];
 
     const [staffForm, setStaffForm] = useState({
-        userName: "", email: "", password: "", ledgerType: [], ledgerBank: [], ledgerMerchant: []
+        userName: "", email: "", password: "", ledgerType: [], ledgerBank: [], ledgerMerchant: [], type: []
     });
 
     const [editForm, setEditForm] = useState({
@@ -157,7 +158,7 @@ const Staff = ({ showSidebar }) => {
     const fn_submit = async () => {
         console.log(staffForm);
         setLoader(true);
-        if (staffForm?.userName === "" || staffForm?.email === "" || staffForm?.password === "" || staffForm?.ledgerType?.length === 0 || staffForm?.ledgerMerchant?.length === 0 || staffForm?.ledgerBank?.length === 0) {
+        if (staffForm?.userName === "" || staffForm?.email === "" || staffForm?.password === "") {
             return notification.error({
                 message: "Error",
                 description: "Fill Complete Form",
@@ -165,7 +166,7 @@ const Staff = ({ showSidebar }) => {
             });
         }
         try {
-            const response = await axios.post(`${BACKEND_URL}/adminStaff/create`, staffForm, {
+            const response = await axios.post(`${BACKEND_URL}/adminStaff/create`, { ...staffForm, type: staffType }, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
@@ -283,6 +284,7 @@ const Staff = ({ showSidebar }) => {
                                         <th className="p-3 text-[13px] font-[600]">Sr No.</th>
                                         <th className="p-3 text-[13px] font-[600]">Name</th>
                                         <th className="p-3 text-[13px] font-[600]">Email</th>
+                                        <th className="p-3 text-[13px] font-[600]">Type</th>
                                         <th className="pl-7 text-[13px] font-[600]">Status</th>
                                         <th className="p-3 text-[13px] font-[600] text-center">Actions</th>
                                     </tr>
@@ -293,6 +295,7 @@ const Staff = ({ showSidebar }) => {
                                             <td className="p-3 text-[13px]">{index + 1}</td>
                                             <td className="p-3 text-[13px]">{staff.userName}</td>
                                             <td className="p-3 text-[13px]">{staff.email}</td>
+                                            <td className="p-3 text-[13px]">{staff.type}</td>
                                             <td className="p-3">
                                                 <button className={`px-3 py-[5px] rounded-[20px] w-20 flex items-center justify-center text-[11px] font-[500] ${!staff.block ? "bg-[#10CB0026] text-[#0DA000]" : "bg-[#FF173D33] text-[#D50000]"}`}>
                                                     {!staff.block ? "Active" : "Inactive"}
@@ -341,6 +344,7 @@ const Staff = ({ showSidebar }) => {
                 </div>
             </div>
 
+             {/* Add Staf Model  */}
             <Modal
                 title={<p className="text-[20px] font-[600]">Add New Staff</p>}
                 open={open}
@@ -355,7 +359,17 @@ const Staff = ({ showSidebar }) => {
                 ]}
                 width={600}
             >
-                <div className="space-y-4">
+                <div className="">
+                    <p className="text-sm font-medium mb-1">Staff Type</p>
+                    <Radio.Group
+                        onChange={(e) => setStaffType(e.target.value)}
+                        value={staffType}
+                        style={{ marginBottom: 16, width: '100%' }}
+                    >
+                        <Radio.Button style={{ width: "50%", textAlign: "center" }} value="transaction">Transaction</Radio.Button>
+                        <Radio.Button style={{ width: "50%", textAlign: "center" }} value="withdraw">Withdraw</Radio.Button>
+                    </Radio.Group>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <p className="text-sm font-medium mb-1">
@@ -379,47 +393,10 @@ const Staff = ({ showSidebar }) => {
                         <Input.Password value={staffForm.password} onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })} placeholder="Enter password" />
                     </div>
 
-                    <div>
-                        <p className="text-sm font-medium mb-1">Select Transaction Type{" "}<span className="text-red-500">*</span></p>
-                        <Select
-                            mode="multiple"
-                            allowClear
-                            style={{
-                                width: '100%',
-                            }}
-                            placeholder="Please select Transaction Type"
-                            onChange={fn_changeLedgerType}
-                            options={transactionTypeOptions}
-                        />
-                    </div>
-
-                    <div>
-                        <p className="text-sm font-medium mb-1">Select Merchant{" "}<span className="text-red-500">*</span></p>
-                        <Select
-                            mode="multiple"
-                            allowClear
-                            style={{ width: '100%' }}
-                            placeholder="Please select Merchant"
-                            onChange={fn_changeMerchant}
-                            options={merchantOptions}
-                        />
-                    </div>
-
-                    <div>
-                        <p className="text-sm font-medium mb-1">Select Banks{" "}<span className="text-red-500">*</span></p>
-                        <Select
-                            mode="multiple"
-                            allowClear
-                            style={{ width: '100%' }}
-                            placeholder="Please Select Banks"
-                            onChange={fn_changeBank}
-                            options={banksOption}
-                        />
-                    </div>
                 </div>
             </Modal>
 
-            {/* edit form */}
+            {/* Edit staff Model */}
             <Modal
                 title={<p className="text-[20px] font-[600]">Edit Staff</p>}
                 open={editModal}

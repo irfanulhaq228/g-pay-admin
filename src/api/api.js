@@ -12,13 +12,15 @@ export const fn_loginAdminApi = async (data) => {
         const token = response?.data?.token;
         const id = response?.data?.data?._id;
         const type = response?.data?.type;
+        const staffType = response?.data?.data?.type;
 
         return {
             status: true,
             message: "Admin Logged in successfully",
             token: token,
             id: id,
-            type
+            type,
+            staffType
         };
     } catch (error) {
         if (error?.response?.status === 400) {
@@ -209,10 +211,12 @@ export const fn_getOverAllBanksData = async () => {
     }
 };
 
-export const fn_getAdminLoginHistoryApi = async (adminId) => {
+export const fn_getAdminLoginHistoryApi = async (staffId, merchantId) => {
     try {
         const token = Cookies.get('token');
-        const response = await axios.get(`${BACKEND_URL}/loginHistory/getAll`, {
+        const url = `${BACKEND_URL}/loginHistory/getAll?${staffId && `staffId=${staffId}`}&${merchantId && `merchantId=${merchantId}`}`;
+
+        const response = await axios.get(url, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -1047,6 +1051,83 @@ export const fn_updatePayoutStatus = async (id, data) => {
             };
         }
         return { status: false, message: "Network Error" };
+    }
+};
+
+export const fn_createLocation = async (data) => {
+    try {
+        const token = Cookies.get("token");
+        const response = await axios.post(
+            `${BACKEND_URL}/location/create`,
+            data,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        return {
+            status: response.data.status === "ok",
+            message: response.data.message || "Location created successfully",
+            data: response.data.data
+        };
+    } catch (error) {
+        if (error?.response) {
+            return {
+                status: false,
+                message: error?.response?.data?.message || "An error occurred",
+            };
+        }
+        return { status: false, message: "Network Error" };
+    }
+};
+
+export const fn_getAllLocations = async () => {
+    try {
+        const token = Cookies.get("token");
+        const response = await axios.get(
+            `${BACKEND_URL}/location/getAll`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        return {
+            status: true,
+            data: response.data?.data || []
+        };
+    } catch (error) {
+        return {
+            status: false,
+            message: error?.response?.data?.message || "Failed to fetch locations"
+        };
+    }
+};
+
+export const fn_deleteLocation = async (locationId) => {
+    try {
+        const token = Cookies.get("token");
+        const response = await axios.delete(
+            `${BACKEND_URL}/location/delete/${locationId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        return {
+            status: response.status === 200,
+            message: response.data.message || "Location deleted successfully"
+        };
+    } catch (error) {
+        return {
+            status: false,
+            message: error?.response?.data?.message || "Failed to delete location"
+        };
     }
 };
 
