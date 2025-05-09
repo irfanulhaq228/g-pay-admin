@@ -882,6 +882,30 @@ export const fn_getAllWithdrawTransactions = async (pageNumber) => {
     }
 };
 
+export const fn_getLocations = async (id) => {
+    try {
+        const token = Cookies.get("token");
+        const response = await axios.get(`${BACKEND_URL}/location/get/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+        });
+        return {
+            status: true,
+            data: response.data?.data
+        };
+    } catch (error) {
+        if (error?.response) {
+            return {
+                status: false,
+                message: error?.response?.data?.message || "An error occurred",
+            };
+        }
+        return { status: false, message: "Network Error" };
+    }
+};
+
 export const fn_getAllBankLogs = async (page) => {
     try {
         const token = Cookies.get("token");
@@ -1083,11 +1107,62 @@ export const fn_createLocation = async (data) => {
     }
 };
 
+export const fn_createPortal = async (data) => {
+    try {
+        const token = Cookies.get("token");
+        const response = await axios.post(`${BACKEND_URL}/portal/create`, data,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        return {
+            status: response.data.status === "ok",
+            message: response.data.message || "Portal Name created successfully",
+            data: response.data.data
+        };
+    } catch (error) {
+        if (error?.response) {
+            return {
+                status: false,
+                message: error?.response?.data?.message || "An error occurred",
+            };
+        }
+        return { status: false, message: "Network Error" };
+    }
+};
+
 export const fn_getAllLocations = async () => {
     try {
         const token = Cookies.get("token");
         const response = await axios.get(
             `${BACKEND_URL}/location/getAll`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        return {
+            status: true,
+            data: response.data?.data || []
+        };
+    } catch (error) {
+        return {
+            status: false,
+            message: error?.response?.data?.message || "Failed to fetch locations"
+        };
+    }
+};
+
+export const fn_getAllPortals = async () => {
+    try {
+        const token = Cookies.get("token");
+        const response = await axios.get(
+            `${BACKEND_URL}/portal/getAll`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -1127,6 +1202,30 @@ export const fn_deleteLocation = async (locationId) => {
         return {
             status: false,
             message: error?.response?.data?.message || "Failed to delete location"
+        };
+    }
+};
+
+export const fn_deletePortal = async (portalId) => {
+    try {
+        const token = Cookies.get("token");
+        const response = await axios.delete(
+            `${BACKEND_URL}/portal/delete/${portalId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        return {
+            status: response.status === 200,
+            message: response.data.message || "Portal Name deleted successfully"
+        };
+    } catch (error) {
+        return {
+            status: false,
+            message: error?.response?.data?.message || "Failed to delete Portal Name"
         };
     }
 };

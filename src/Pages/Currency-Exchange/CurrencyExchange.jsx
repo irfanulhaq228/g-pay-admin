@@ -1,44 +1,30 @@
+import axios from "axios";
 import Cookies from "js-cookie";
 import React, { useState, useEffect } from "react";
-import {
-  Button,
-  Modal,
-  Input,
-  Form,
-  notification,
-  Popconfirm,
-  Select,
-  Row,
-  Col,
-} from "antd";
-import axios from "axios";
+import { Button, Modal, Input, Form, notification, Popconfirm, Select, Row, Col } from "antd";
+
+import BACKEND_URL, { fn_createPortal, fn_deletePortal, fn_getAllPortals } from "../../api/api";
+import { fn_createCurrencyExchange, fn_getAllCurrencyExchange, fn_deleteCurrencyExchange, fn_editCurrencyExchange, fn_createLocation, fn_getAllLocations, fn_deleteLocation } from "../../api/api";
 
 import { FiEdit } from "react-icons/fi";
 import { FaExclamationCircle, FaTrash } from "react-icons/fa";
-import {
-  fn_createCurrencyExchange,
-  fn_getAllCurrencyExchange,
-  fn_deleteCurrencyExchange,
-  fn_editCurrencyExchange,
-  fn_createLocation,
-  fn_getAllLocations,
-  fn_deleteLocation,
-} from "../../api/api";
-import BACKEND_URL from "../../api/api";
 
 const CurrencyExchange = ({ authorization, showSidebar }) => {
+
   const [form] = Form.useForm();
+  const [portalForm] = Form.useForm();
   const [locationForm] = Form.useForm();
+  const [portals, setPortals] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [locations, setLocations] = useState([]);
+  const [exchanges, setExchanges] = useState([]);
   const [currencies, setCurrencies] = useState([]);
   const containerHeight = window.innerHeight - 120;
   const [editModal, setIsEditModal] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [portalModal, setIsPortalModal] = useState(true);
   const [selectedCurrency, setSelectedCurrency] = useState(null);
-  const [banks, setBanks] = useState([]);
-  const [locations, setLocations] = useState([]);
-  const [exchanges, setExchanges] = useState([]);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
   useEffect(() => {
     window.scroll(0, 0);
@@ -48,6 +34,7 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
     fetchCurrencies();
     fetchLocations();
     fetchExchanges();
+    fetchPortal();
   }, []);
 
   const fetchCurrencies = async () => {
@@ -86,6 +73,25 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
       notification.error({
         message: "Error",
         description: "Failed to fetch locations",
+      });
+    }
+  };
+
+  const fetchPortal = async () => {
+    try {
+      const response = await fn_getAllPortals();
+      if (response.status) {
+        setPortals(response.data);
+      } else {
+        notification.error({
+          message: "Error",
+          description: response.message || "Failed to fetch portal name",
+        });
+      }
+    } catch (error) {
+      notification.error({
+        message: "Error",
+        description: "Failed to fetch portal name",
       });
     }
   };
@@ -227,6 +233,10 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
     locationForm.resetFields();
   };
 
+  const handlePortalModalCancel = () => {
+    setIsPortalModal(false);
+  };
+
   const handleLocationModalOk = async () => {
     try {
       const values = await locationForm.validateFields();
@@ -241,9 +251,8 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
           message: "Success",
           description: response.message || "Location added successfully",
         });
-        setIsLocationModalOpen(false);
         locationForm.resetFields();
-        fetchLocations(); // Refresh the locations list
+        fetchLocations();
       } else {
         notification.error({
           message: "Error",
@@ -281,15 +290,60 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
     }
   };
 
-  console.log(locationForm.getFieldValue("exchangeId"));
-  console.log(locationForm.getFieldValue("location"));
+  const handleDeletePortal = async (portalId) => {
+    try {
+      const response = await fn_deletePortal(portalId);
+      if (response.status) {
+        notification.success({
+          message: "Success",
+          description: response.message,
+        });
+        fetchPortal();
+      } else {
+        notification.error({
+          message: "Error",
+          description: response.message,
+        });
+      }
+    } catch (error) {
+      notification.error({
+        message: "Error",
+        description: "Failed to delete location",
+      });
+    }
+  };
+
+  const handlePortalModalOk = async () => {
+    try {
+      const values = await portalForm.validateFields();
+      const response = await fn_createPortal(values);
+
+      if (response.status) {
+        notification.success({
+          message: "Success",
+          description: response.message || "Portal Name added successfully",
+        });
+        fetchPortal();
+        portalForm.resetFields();
+      } else {
+        notification.error({
+          message: "Error",
+          description: response.message || "Failed to add Portal Name",
+        });
+      }
+    } catch (error) {
+      notification.error({
+        message: "Error",
+        description: "Please fill all required fields",
+      });
+    }
+  };
 
   return (
     <>
       <div
-        className={`bg-gray-100 transition-all duration-500 ${
-          showSidebar ? "pl-0 md:pl-[270px]" : "pl-0"
-        }`}
+        className={`bg-gray-100 transition-all duration-500 ${showSidebar ? "pl-0 md:pl-[270px]" : "pl-0"
+          }`}
         style={{ minHeight: `${containerHeight}px` }}
       >
         <div className="p-7">
@@ -303,6 +357,9 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
 
           {/* Add Currency button outside table */}
           <div className="flex justify-end gap-4 mb-4">
+            <Button type="primary" onClick={() => setIsPortalModal(true)}>
+              Add Portal Name
+            </Button>
             <Button type="primary" onClick={handleAddLocation}>
               Add Location
             </Button>
@@ -333,9 +390,8 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
                       currencies.map((currency, index) => (
                         <tr
                           key={currency._id}
-                          className={`border-t ${
-                            index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                          }`}
+                          className={`border-t ${index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                            }`}
                         >
                           <td className="p-4 text-[13px]">
                             {currency?.currency}
@@ -348,7 +404,7 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
                             {currency?.charges}%
                           </td>
                           <td className="p-4 text-[13px] flex items-center gap-[10px]">
-                            <Popconfirm
+                            {/* <Popconfirm
                               title="Delete Currency"
                               description="Are you sure you want to delete this currency?"
                               onConfirm={() => handleDelete(currency._id)}
@@ -361,7 +417,7 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
                                 icon={<FaTrash />}
                                 size="small"
                               />
-                            </Popconfirm>
+                            </Popconfirm> */}
                             <FiEdit
                               className="text-[24px] bg-green-300 p-[5px] rounded-[3px] text-green-800 cursor-pointer"
                               onClick={() => fn_editCall(currency)}
@@ -390,7 +446,7 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
         </div>
       </div>
 
-      {/* create modal */}
+      {/* create currency modal */}
       <Modal
         title="Add New Currency"
         open={isModalOpen}
@@ -409,7 +465,7 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
           </Form.Item>
 
           <Form.Item
-            label={`Currency Rate`}
+            label={`Currency Rate (INR)`}
             name="currencyRate"
             rules={[{ required: true, message: "Please enter currency rate" }]}
           >
@@ -426,7 +482,7 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
         </Form>
       </Modal>
 
-      {/* edit modal */}
+      {/* edit currency modal */}
       <Modal
         title="Edit Currency"
         open={editModal}
@@ -441,11 +497,11 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
             name="currency"
             rules={[{ required: true, message: "Please enter currency" }]}
           >
-            <Input placeholder="Enter currency" />
+            <Input placeholder="Enter currency" disabled />
           </Form.Item>
 
           <Form.Item
-            label="Currency Rate"
+            label="Currency Rate (INR)"
             name="currencyRate"
             rules={[{ required: true, message: "Please enter currency rate" }]}
           >
@@ -512,7 +568,7 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
           <div className="border-b-2 border-gray-200 my-4"></div>
 
           {/* Table Section */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[300px] mb-[20px]">
             <table className="w-full">
               <thead>
                 <tr className="bg-[#ECF0FA]">
@@ -532,11 +588,11 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
               </thead>
               <tbody>
                 {locations?.length > 0 ? (
-                  locations.map((location, index) => (
+                  [...locations].reverse().map((location, index) => (
                     <tr key={location._id} className="border-b">
                       <td className="p-3 text-[13px]">{index + 1}</td>
                       <td className="p-3 text-[13px]">{location.location}</td>
-                      <td className="p-3 text-[13px]">{location.exchange}</td>
+                      <td className="p-3 text-[13px]">{location.exchangeId?.currency}</td>
                       <td className="p-3 text-[13px]">
                         <Button
                           className="bg-red-100 hover:bg-red-200 text-red-600 rounded-full p-2 flex items-center justify-center min-w-[32px] h-[32px] border-none"
@@ -549,7 +605,88 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
                     </tr>
                   ))
                 ) : (
-                  <tr>
+                  <tr className="leading-[30px]">
+                    <td colSpan="4" className="text-center text-[13px]">
+                      No data found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Portal Modal */}
+      <Modal
+        title={<p className="text-[16px] font-[700]">Portal Management</p>}
+        open={portalModal}
+        onCancel={handlePortalModalCancel}
+        footer={null}
+        width={600}
+        centered
+        style={{ fontFamily: "sans-serif" }}
+      >
+        <div className="flex flex-col gap-4">
+          {/* Top Section */}
+          <Form form={portalForm}>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="portalName"
+                  rules={[{ required: true, message: "Please enter Portal Name" }]}
+                >
+                  <Input placeholder="Enter Portal Name" className="text-[12px]" onPressEnter={handlePortalModalOk} />
+                </Form.Item>
+              </Col>
+              <Button
+                type="primary"
+                className="w-24"
+                onClick={handlePortalModalOk}
+              >
+                Submit
+              </Button>
+            </Row>
+          </Form>
+
+          {/* Divider Line */}
+          <div className="border-b-2 border-gray-200 my-4"></div>
+
+          {/* Table Section */}
+          <div className="overflow-x-auto max-h-[300px] mb-[20px]">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-[#ECF0FA]">
+                  <th className="p-3 text-[13px] font-[600] text-left">
+                    Sr. No
+                  </th>
+                  <th className="p-3 text-[13px] font-[600] text-left">
+                    Portal Name
+                  </th>
+                  <th className="p-3 text-[13px] font-[600] text-left">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {portals?.length > 0 ? (
+                  [...portals].reverse().map((portal, index) => (
+                    <tr key={location._id} className="border-b">
+                      <td className="p-3 text-[13px]">{index + 1}</td>
+                      <td className="p-3 text-[13px]">{portal.portalName}</td>
+                      <td className="p-3 text-[13px]">
+                        <Button
+                          className="bg-red-100 hover:bg-red-200 text-red-600 rounded-full p-2 flex items-center justify-center min-w-[32px] h-[32px] border-none"
+                          title="Delete"
+                          onClick={() => handleDeletePortal(portal._id)}
+                        >
+                          <FaTrash size={16} />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr className="leading-[30px]">
                     <td colSpan="4" className="text-center text-[13px]">
                       No data found
                     </td>
