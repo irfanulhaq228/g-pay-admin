@@ -214,7 +214,7 @@ export const fn_getOverAllBanksData = async () => {
 export const fn_getAdminLoginHistoryApi = async (staffId, merchantId) => {
     try {
         const token = Cookies.get('token');
-        const url = `${BACKEND_URL}/loginHistory/getAll?${staffId && `staffId=${staffId}`}&${merchantId && `merchantId=${merchantId}`}`;
+        const url = `${BACKEND_URL}/loginHistory/getAll?${staffId && `adminStaffId=${staffId}`}&${merchantId && `merchantId=${merchantId}`}`;
 
         const response = await axios.get(url, {
             headers: {
