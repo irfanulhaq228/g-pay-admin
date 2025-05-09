@@ -228,6 +228,7 @@ Updated Date: ${moment.utc(item?.updatedAt)
                     <tr className="bg-[#ECF0FA] text-left text-[12px] text-gray-700">
                       <th className="p-4">S_ID</th>
                       <th className="p-4">Account Holder Name</th>
+                      <th className="p-4">Bank Name</th>
                       <th className="p-4">Account Number</th>
                       <th className="p-4">IFSC Number</th>
                       <th className="p-4">Amount</th>
@@ -243,6 +244,9 @@ Updated Date: ${moment.utc(item?.updatedAt)
                         </td>
                         <td className="p-4 text-[12px] font-[600] text-[#000000B2]">
                           {item?.username}
+                        </td>
+                        <td className="p-4 text-[12px] font-[600] text-[#000000B2]">
+                          {item?.bankName}
                         </td>
                         <td className="p-4 text-[12px] font-[600] text-[#000000B2] text-nowrap">
                           {item?.account}

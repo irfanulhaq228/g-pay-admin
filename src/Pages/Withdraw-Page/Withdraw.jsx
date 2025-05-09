@@ -624,6 +624,76 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                     </>
                                 )}
 
+                                {/* AED and By Cash Details */}
+                                {(selectedTransaction?.exchangeId?._id === "67c1cafffd672c91b4a768cb" || 
+                                  selectedTransaction?.exchangeId?._id === "67c1cb2ffd672c91b4a769b2") && (
+                                    <>
+                                        <div className="border-t mt-2 mb-1"></div>
+                                        <p className="font-[600] text-[14px] mb-2">Cash Withdrawal Details</p>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Location:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={selectedTransaction?.locationId?.location || 'N/A'}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Name:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={selectedTransaction?.customerName || 'N/A'}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Contact Number:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={selectedTransaction?.contactNumber || 'N/A'}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Token:</p>
+                                            <div 
+                                                className="text-[12px] bg-gray-200 p-2 rounded w-full"
+                                                dangerouslySetInnerHTML={{ __html: selectedTransaction?.token || 'N/A' }}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Portal Details */}
+                                {selectedTransaction?.exchangeId?._id === "67c20f130213c2d397da36c9" && (
+                                    <>
+                                        <div className="border-t mt-2 mb-1"></div>
+                                        <p className="font-[600] text-[14px] mb-2">Portal Details</p>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Portal Name:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={selectedTransaction?.portalId?.portalName || 'N/A'}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">User Name:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={selectedTransaction?.customerName || 'N/A'}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+
                                 {/* USDT image upload */}
                                 {selectedTransaction?.exchangeId?._id === "67c1caa1fd672c91b4a7679f" && (
                                     <>
