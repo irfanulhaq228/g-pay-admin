@@ -1,8 +1,8 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-// const BACKEND_URL = "https://backend.gpay.one";
-const BACKEND_URL = "http://46.202.166.64:8015";
+const BACKEND_URL = "https://backend.gpay.one";
+// const BACKEND_URL = "http://46.202.166.64:8015";
 export const PDF_READ_URL = "https://pdf.royal247.org/parse-statement";
 
 
@@ -214,7 +214,7 @@ export const fn_getOverAllBanksData = async () => {
 export const fn_getAdminLoginHistoryApi = async (staffId, merchantId) => {
     try {
         const token = Cookies.get('token');
-        const url = `${BACKEND_URL}/loginHistory/getAll?${staffId && `staffId=${staffId}`}&${merchantId && `merchantId=${merchantId}`}`;
+        const url = `${BACKEND_URL}/loginHistory/getAll?${staffId && `adminStaffId=${staffId}`}&${merchantId && `merchantId=${merchantId}`}`;
 
         const response = await axios.get(url, {
             headers: {

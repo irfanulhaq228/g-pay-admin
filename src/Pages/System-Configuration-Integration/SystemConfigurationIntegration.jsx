@@ -60,6 +60,12 @@ const SystemConfigurationIntegration = ({ authorization, showSidebar }) => {
   };
 
   const fetchAdminLoginHistory = async (staffId, merchantId) => {
+    if(staffId){
+      setSelectedMerchant(null);
+    }
+    if(merchantId){
+      setSelectedStaff(null)
+    }
     let response = await fn_getAdminLoginHistoryApi(staffId, merchantId);
     if (response?.status) {
       setLoginData(response?.data || []);
@@ -169,8 +175,8 @@ const SystemConfigurationIntegration = ({ authorization, showSidebar }) => {
                   setSelectedStaff(null);
                   fetchAdminLoginHistory(null, value);
                 }}
+                value={selectedMerchant}
                 options={[
-                  { value: 'all', label: 'All Merchants' },
                   ...merchants.map(merchant => ({
                     value: merchant._id,
                     label: merchant.merchantName
@@ -180,13 +186,13 @@ const SystemConfigurationIntegration = ({ authorization, showSidebar }) => {
               <Select
                 style={{ width: 200 }}
                 placeholder="Select Staff"
+                value={selectedStaff}
                 onChange={(value) => {
                   setSelectedStaff(value);
                   setSelectedMerchant(null);
                   fetchAdminLoginHistory(value, null);
                 }}
                 options={[
-                  { value: 'all', label: 'All Staff' },
                   ...staff.map(staffMember => ({
                     value: staffMember._id,
                     label: staffMember.userName
