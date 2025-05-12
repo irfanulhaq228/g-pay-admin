@@ -338,9 +338,14 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
             }
 
             const token = Cookies.get("token");
+            const userId = Cookies.get('userId')
+            const type = Cookies.get('type')
             const formData = new FormData();
             formData.append("status", action);
             formData.append("utr", utr);
+            if (type === 'staff'){
+                formData.append("adminStaffId", userId)
+            }
             if (image) formData.append("image", image);
             const response = await axios.put(`${BACKEND_URL}/withdraw/update/${id}`, formData, {
                 headers: {
@@ -357,7 +362,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                 });
             }
         } catch (error) {
-            console.log('Error in handleTransactionAction:', error);
+            console.log('Error in handle Transaction Action:', error);
         }
     };
 

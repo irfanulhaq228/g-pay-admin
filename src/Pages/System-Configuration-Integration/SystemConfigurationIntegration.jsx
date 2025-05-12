@@ -210,7 +210,7 @@ const SystemConfigurationIntegration = ({ authorization, showSidebar }) => {
                     <tr key={index} className="text-gray-800 text-sm border-b">
                       <td className="p-4">{entry.loginDate || "-"}</td>
                       <td className="p-4">
-                        {entry.ip?.split("::ffff:")[1] || "-"}
+                        {entry.ip ? entry.ip.replace(/^::ffff:/, '') : "-"}
                       </td>
                       <td className="p-4">{entry.city || "-"}</td>
                     </tr>
