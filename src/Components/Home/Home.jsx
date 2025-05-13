@@ -1,48 +1,33 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { GoDotFill } from "react-icons/go";
-import { FaCircleExclamation } from "react-icons/fa6";
-import {
-  fn_getAdminsTransactionApi,
-  fn_getCardDataByStatus,
-  fn_getAllTransactionApi,
-} from "../../api/api";
-import graph from "../../assets/graph.png";
-import {
-  Chart as ChartJS,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  Tooltip,
-  Legend,
-} from "chart.js";
 import { Bar } from "react-chartjs-2";
 import { DatePicker, Space } from "antd";
+import { GoDotFill } from "react-icons/go";
+import graph from "../../assets/graph.png";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { FaCircleExclamation } from "react-icons/fa6";
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from "chart.js";
+import { fn_getAdminsTransactionApi, fn_getCardDataByStatus, fn_getAllTransactionApi } from "../../api/api";
 
 const Home = ({ authorization, showSidebar }) => {
   const navigate = useNavigate();
-  const containerHeight = window.innerHeight - 120;
-  const [recentTransactions, setRecentTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [cardData, setCardData] = useState({
-    approved: {},
-    pending: {},
-    failed: {},
-  });
   const { RangePicker } = DatePicker;
+  const [error, setError] = useState("");
+  const totalHeight = window.innerHeight - 366;
+  const [loading, setLoading] = useState(true);
   const [totalTrns, setTotalTrns] = useState(0);
+  const containerHeight = window.innerHeight - 120;
   const [adminCharges, setAdminCharges] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [dateRange, setDateRange] = useState([null, null]);
   const [totalTransaction, setTotalTransactions] = useState(0);
+  const [recentTransactions, setRecentTransactions] = useState([]);
   const [declineTransactions, setDeclineTransactions] = useState(0);
+  const [merchantAvailBalance, setMerchantAvailBalance] = useState(0);
   const [verifiedTransactions, setVerifiedTransactions] = useState(0);
   const [unverifiedTransactions, setUnverifiedTransactions] = useState(0);
-  const [merchantAvailBalance, setMerchantAvailBalance] = useState(0);
+  const [cardData, setCardData] = useState({ approved: {},pending: {},failed: {}, });
 
-  const totalHeight = window.innerHeight - 366;
 
   useEffect(() => {
     window.scroll(0, 0);

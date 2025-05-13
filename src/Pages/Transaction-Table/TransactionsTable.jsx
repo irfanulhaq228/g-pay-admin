@@ -1,65 +1,47 @@
 import jsPDF from "jspdf";
-import { useNavigate } from "react-router-dom";
-import React, { useState, useEffect } from "react";
-import "react-datepicker/dist/react-datepicker.css";
-import moment from "moment-timezone";
-import {
-  Pagination,
-  Modal,
-  Input,
-  notification,
-  DatePicker,
-  Space,
-  Select,
-  Button,
-} from "antd";
 import Cookies from "js-cookie";
+import moment from "moment-timezone";
+import { io } from "socket.io-client";
 import { FiEye } from "react-icons/fi";
 import { IoMdCheckmark } from "react-icons/io";
+import { useNavigate } from "react-router-dom";
 import { GoCircleSlash } from "react-icons/go";
+import React, { useState, useEffect } from "react";
+import "react-datepicker/dist/react-datepicker.css";
 import { FaIndianRupeeSign } from "react-icons/fa6";
-import BACKEND_URL, {
-  fn_getAdminsTransactionApi,
-  fn_getAllTransactionApi,
-  fn_updateTransactionStatusApi,
-  fn_getMerchantApi,
-  fn_getOverAllBanksData,
-} from "../../api/api";
-
-import { io } from "socket.io-client";
+import { Pagination, Modal, Input, notification, DatePicker, Space, Select, Button } from "antd";
+import BACKEND_URL, { fn_getAdminsTransactionApi, fn_getAllTransactionApi, fn_updateTransactionStatusApi, fn_getMerchantApi, fn_getOverAllBanksData } from "../../api/api";
 
 const TransactionsTable = ({ authorization, showSidebar }) => {
-  const navigate = useNavigate();
-  const socket = io(`${BACKEND_URL}`, { autoConnect: false });
   const searchParams = new URLSearchParams(location.search);
-
+  const navigate = useNavigate();
   const { RangePicker } = DatePicker;
   const [open, setOpen] = useState(false);
   const status = searchParams.get("status");
+  const [allTrns, setAllTrns] = useState([]);
   const [isEdit, setIsEdit] = useState(false);
-  const [totalPages, setTotalPages] = useState(1);
   const [loader, setLoader] = useState(false);
   const [loading, setLoading] = useState(true);
-
+  const [allBanks, setAllBanks] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
   const containerHeight = window.innerHeight - 120;
+  const [newStatus, setNewStatus] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [transactions, setTransactions] = useState([]);
   const [searchTrnId, setSearchTrnId] = useState("");
+  const [allMerchant, setAllMerchant] = useState([]);
+  const [isHovering, setIsHovering] = useState(false);
+  const [transactions, setTransactions] = useState([]);
   const [merchant, setMerchant] = useState(status || "");
   const [dateRange, setDateRange] = useState([null, null]);
-  const [declineButtonClicked, setDeclinedButtonClicked] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState(null);
-  const [allTrns, setAllTrns] = useState([]);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isHovering, setIsHovering] = useState(false);
-  const [selectedFilteredMerchant, setSelectedFilteredMerchant] = useState("");
-  const [allMerchant, setAllMerchant] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [allBanks, setAllBanks] = useState([]);
+  const socket = io(`${BACKEND_URL}`, { autoConnect: false });
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [selectedFilteredBank, setSelectedFilteredBank] = useState("");
-  const [newStatus, setNewStatus] = useState(null);
+  const [declineButtonClicked, setDeclinedButtonClicked] = useState(false);
+  const [selectedFilteredMerchant, setSelectedFilteredMerchant] = useState("");
 
   const fetchMerchants = async () => {
     try {
