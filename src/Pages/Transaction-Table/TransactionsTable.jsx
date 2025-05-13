@@ -305,6 +305,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
     
     const payload = {
       status: action,
+      // walletCredit: action === "Approved" ? true : false,
       trnStatus: action === "Approved" ? "Points Pending" : "Transaction Decline",
       transactionReason: selectedOption,
     };

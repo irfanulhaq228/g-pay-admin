@@ -306,7 +306,7 @@ const Home = ({ authorization, showSidebar }) => {
             <p className="pt-[3px] text-[13px] font-[500] mb-[7px]">
               Approved Payments:{" "}
               <span className="font-[700]">
-                {Number(verifiedTransactions).toFixed(2) || 0}
+              ₹ {Number(verifiedTransactions).toFixed(2) || 0}
               </span>
             </p>
           </div>
