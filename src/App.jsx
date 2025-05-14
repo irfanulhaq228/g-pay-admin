@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import React, { useState, useRef, useEffect } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import Home from "./Components/Home/Home";
 import NavBar from "./Components/NabBar/NavBar";
@@ -26,12 +26,70 @@ import PayoutDetails from "./Pages/Payout/PayoutDetails";
 import WalletTransfer from "./Pages/WalletTransfer/WalletTransfer";
 
 function App() {
+const navigate = useNavigate();
+  const inactivityTimeoutRef = useRef(null);
+  const tabCloseTimeoutRef = useRef(null);
+
   const [authorization, setAuthorization] = useState(
     Cookies.get("token") ? true : false
   );
   const [showSidebar, setShowSide] = useState(
     window.innerWidth > 760 ? true : false
   );
+
+  const fn_logout = () => {
+    Cookies.remove("adminId");
+    Cookies.remove("token");
+    Cookies.remove("type");
+    Cookies.remove("staffType");
+    setAuthorization(false);
+    navigate("/login");
+  };
+
+  // 👇 useEffect only runs when the user is authorized
+  useEffect(() => {
+    if (!authorization) return; // ✅ Prevents running before login
+
+    const activityEvents = ["mousemove", "keydown", "scroll", "click"];
+
+    const resetInactivityTimer = () => {
+      clearTimeout(inactivityTimeoutRef.current);
+      inactivityTimeoutRef.current = setTimeout(() => {
+        fn_logout(); // User inactive for 10 mins
+      }, 10 * 60 * 1000);
+    };
+    
+    const handleTabBlur = () => {
+      tabCloseTimeoutRef.current = setTimeout(() => {
+        fn_logout(); // Tab inactive for 5 mins
+      }, 5 * 60 * 1000);
+    };
+
+    const handleTabFocus = () => {
+      clearTimeout(tabCloseTimeoutRef.current);
+    };
+
+    // ✅ Add event listeners
+    activityEvents.forEach((event) =>
+      window.addEventListener(event, resetInactivityTimer)
+    );
+    window.addEventListener("blur", handleTabBlur);
+    window.addEventListener("focus", handleTabFocus);
+
+    // ✅ Start timer on login
+    resetInactivityTimer();
+
+    return () => {
+      activityEvents.forEach((event) =>
+        window.removeEventListener(event, resetInactivityTimer)
+      );
+      window.removeEventListener("blur", handleTabBlur);
+      window.removeEventListener("focus", handleTabFocus);
+      clearTimeout(inactivityTimeoutRef.current);
+      clearTimeout(tabCloseTimeoutRef.current);
+    };
+  }, [authorization]); // 👈 Only reruns when authorization changes
+
 
   return (
     <>
