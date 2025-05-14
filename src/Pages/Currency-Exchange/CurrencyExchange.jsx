@@ -22,7 +22,7 @@ const CurrencyExchange = ({ authorization, showSidebar }) => {
   const containerHeight = window.innerHeight - 120;
   const [editModal, setIsEditModal] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [portalModal, setIsPortalModal] = useState(true);
+  const [portalModal, setIsPortalModal] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
