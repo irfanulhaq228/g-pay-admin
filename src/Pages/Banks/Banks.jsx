@@ -999,6 +999,77 @@ const BankManagement = ({ authorization, showSidebar }) => {
                 />
               </div>
             </div>
+            <div className="flex gap-4">
+              {/* IFCS No. */}
+              <div className="flex-1 my-2">
+                <p className="text-[12px] font-[500] pb-1">
+                  {activeTab === "bank" ? (
+                    <>
+                      IFSC No. <span className="text-[#D50000]">*</span>
+                    </>
+                  ) : (
+                    <>
+                      UPI ID <span className="text-[#D50000]">*</span>
+                    </>
+                  )}
+                </p>
+                <Input
+                  value={data?.iban}
+                  onChange={(e) =>
+                    setData((prev) => ({ ...prev, iban: e.target.value }))
+                  }
+                  className="w-full text-[12px]"
+                  placeholder={`${activeTab === "bank" ? "Enter IFSC Number" : "Enter UPI ID"
+                    }`}
+                />
+              </div>
+              {/* account Holder Name */}
+              <div className="flex-1 my-2">
+                <p className="text-[12px] font-[500] pb-1">
+                  Account Holder Name <span className="text-[#D50000]">*</span>
+                </p>
+                <Input
+                  value={data?.accountHolderName}
+                  onChange={(e) =>
+                    setData((prev) => ({
+                      ...prev,
+                      accountHolderName: e.target.value,
+                    }))
+                  }
+                  className="w-full text-[12px]"
+                  placeholder="Account Holder Name"
+                />
+              </div>
+            </div>
+            <div className="flex gap-4">
+              {/* Account Limit */}
+              <div className="flex-1 my-2">
+                <p className="text-[12px] font-[500] pb-1">
+                  Account Limit <span className="text-[#D50000]">*</span>
+                </p>
+                <Input
+                  value={data?.accountLimit}
+                  onChange={(e) =>
+                    setData((prev) => ({ ...prev, accountLimit: e.target.value }))
+                  }
+                  className="w-full text-[12px]"
+                  placeholder="Account Limit "
+                />
+              </div>
+              <div className="flex-1 my-2">
+                <p className="text-[12px] font-[500] pb-1">
+                  No of Transactions <span className="text-[#D50000]">*</span>
+                </p>
+                <Input
+                  value={data?.noOfTrans}
+                  onChange={(e) =>
+                    setData((prev) => ({ ...prev, noOfTrans: e.target.value }))
+                  }
+                  className="w-full text-[12px]"
+                  placeholder="No of Transactions"
+                />
+              </div>
+            </div>
           </>
         )}
         {activeTab === "crypto" && (
