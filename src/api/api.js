@@ -1,12 +1,26 @@
+import { message } from "antd";
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const BACKEND_URL = "https://backend.gpay.one";
-// const BACKEND_URL = "http://46.202.166.64:8015";
+// const BACKEND_URL = "https://backend.gpay.one";
+const BACKEND_URL = "http://46.202.166.64:8015";
 export const PDF_READ_URL = "https://pdf.royal247.org/parse-statement";
 
-
 export const fn_loginAdminApi = async (data) => {
+    try {
+        const response = await axios.post(`${BACKEND_URL}/admin/login`, data);
+        if (response?.status === 200) {
+            return { status: true, message: "OTP sents to Email" }
+        };
+    } catch (error) {
+        if (error?.response?.status === 400) {
+            return { status: false, message: error?.response?.data?.message };
+        }
+        return { status: false, message: "Network Error" };
+    }
+};
+
+export const fn_otpVerifyApi = async (data) => {
     try {
         const response = await axios.post(`${BACKEND_URL}/admin/login`, data);
         const token = response?.data?.token;
@@ -117,6 +131,52 @@ export const fn_BankUpdate = async (id, data) => {
         return {
             status: true,
             data: response.data,
+        };
+    } catch (error) {
+        if (error?.response?.status === 400) {
+            return { status: false, message: error?.response?.data?.message };
+        }
+        return { status: false, message: "Network Error" };
+    }
+};
+
+export const fn_setExchangeRate = async (data) => {
+    try {
+        const token = Cookies.get("token");
+        const response = await axios.post(`${BACKEND_URL}/cryptoExchange/create`, data,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        return {
+            status: true,
+            data: response.data,
+        };
+    } catch (error) {
+        if (error?.response?.status === 400) {
+            return { status: false, message: error?.response?.data?.message };
+        }
+        return { status: false, message: "Network Error" };
+    }
+};
+
+export const fn_getExchangeRateApi = async () => {
+    try {
+        const token = Cookies.get("token");
+        const response = await axios.get(`${BACKEND_URL}/cryptoExchange/getAll`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        return {
+            status: true,
+            data: response?.data?.data?.[0] || null,
         };
     } catch (error) {
         if (error?.response?.status === 400) {

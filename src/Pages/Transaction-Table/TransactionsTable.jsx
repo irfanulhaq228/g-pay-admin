@@ -3,17 +3,19 @@ import Cookies from "js-cookie";
 import moment from "moment-timezone";
 import { io } from "socket.io-client";
 import { FiEye } from "react-icons/fi";
-import { IoMdCheckmark } from "react-icons/io";
+import { IoMdCheckmark, IoMdDownload } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 import { GoCircleSlash } from "react-icons/go";
 import React, { useState, useEffect } from "react";
 import "react-datepicker/dist/react-datepicker.css";
-import { FaIndianRupeeSign } from "react-icons/fa6";
+import { FaDollarSign, FaIndianRupeeSign } from "react-icons/fa6";
 import { Pagination, Modal, Input, notification, DatePicker, Space, Select, Button } from "antd";
-import BACKEND_URL, { fn_getAdminsTransactionApi, fn_getAllTransactionApi, fn_updateTransactionStatusApi, fn_getMerchantApi, fn_getOverAllBanksData } from "../../api/api";
+import BACKEND_URL, { fn_getAdminsTransactionApi, fn_getAllTransactionApi, fn_updateTransactionStatusApi, fn_getMerchantApi, fn_getOverAllBanksData, fn_setExchangeRate, fn_getExchangeRateApi } from "../../api/api";
+import { BsCurrencyExchange } from "react-icons/bs";
 
 const TransactionsTable = ({ authorization, showSidebar }) => {
   const searchParams = new URLSearchParams(location.search);
+  
   const navigate = useNavigate();
   const { RangePicker } = DatePicker;
   const [open, setOpen] = useState(false);
@@ -24,6 +26,8 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
   const [loading, setLoading] = useState(true);
   const [allBanks, setAllBanks] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
+  const [savedRate, setSavedRate] = useState(null);
+  const [indianRate, setIndianRate] = useState("");
   const containerHeight = window.innerHeight - 120;
   const [newStatus, setNewStatus] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,6 +41,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const socket = io(`${BACKEND_URL}`, { autoConnect: false });
+  const [exchangeRateModal, setExchangeRateModal] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [selectedFilteredBank, setSelectedFilteredBank] = useState("");
@@ -73,6 +78,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
 
   // Listen for real-time updates
   useEffect(() => {
+    fn_getExchangeRate();
     socket.on("ledgerUpdated", (data) => {
       console.log("Ledger Update Received:", data);
 
@@ -158,7 +164,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
               ),
           };
         });
-  
+
         setAllBanks(banks);
       }
     } catch (error) {
@@ -284,7 +290,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
   const handleTransactionAction = async (action, transactionId) => {
     const adminId = Cookies.get('adminId');
     const userType = Cookies.get('type');
-    
+
     const payload = {
       status: action,
       // walletCredit: action === "Approved" ? true : false,
@@ -581,6 +587,53 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
     }
   };
 
+  const fn_closeExchangeModal = () => {
+    setExchangeRateModal(false);
+  };
+
+  const fn_submitRate = async (e) => {
+    e.preventDefault();
+    if (!indianRate || indianRate === "") {
+      notification.error({
+        message: "Error",
+        description: "Please enter a valid rate.",
+        placement: "topRight",
+      });
+      return;
+    }
+    const payload = {
+      coin: 1, inr: Number(indianRate)
+    };
+    if (savedRate) {
+      payload.id = savedRate._id;
+    }
+    const result = await fn_setExchangeRate(payload);
+    if (result.status) {
+      setExchangeRateModal(false);
+      setIndianRate("");
+      fn_getExchangeRate();
+      notification.success({
+        message: "Success",
+        description: "Exchange rate updated successfully!",
+        placement: "topRight",
+      });
+    } else {
+      notification.error({
+        message: "Error",
+        description: result.message,
+        placement: "topRight",
+      });
+    }
+  };
+
+  const fn_getExchangeRate = async () => {
+    const response = await fn_getExchangeRateApi();
+    if (response?.status) {
+      setIndianRate(response?.data?.inr || "");
+      setSavedRate(response?.data);
+    }
+  };
+
   function getMonthName(monthIndex) {
     const months = [
       "Jan",
@@ -603,9 +656,8 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
     <>
       <div
         style={{ minHeight: `${containerHeight}px` }}
-        className={`bg-gray-100 transition-all duration-500 ${
-          showSidebar ? "pl-0 md:pl-[270px]" : "pl-0"
-        }`}
+        className={`bg-gray-100 transition-all duration-500 ${showSidebar ? "pl-0 md:pl-[270px]" : "pl-0"
+          }`}
       >
         <div className="p-7">
           <div className="flex flex-col md:flex-row gap-[12px] items-center justify-between mb-4">
@@ -614,26 +666,35 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
               Dashboard - Data Table
             </p>
           </div>
-          <div className="flex justify-end mb-2">
-            <Button
-              type="primary"
-              onClick={async () => {
-                if (!dateRange?.[0])
-                  return notification.error({
-                    message: "Error",
-                    description: "Select Date Range",
-                    placement: "topRight",
-                  });
-                handleDownloadReport();
-              }}
-              disabled={loader}
-            >
-              {loader ? (
-                <p className="">Downloading Report...</p>
-              ) : (
-                <p className="">Download Report</p>
-              )}
-            </Button>
+          <div className={`flex mb-2 ${savedRate ? "justify-between" : "justify-end"}`}>
+            {savedRate && (
+              <div>
+                <p className="text-[14px] font-[600] text-gray-500">For Crypto Payment:</p>
+                <p className="text-[14px] font-[600]">USDT Rate: <span className="text-green-600">1 USDT = {savedRate?.inr} INR</span></p>
+              </div>
+            )}
+            <div className="flex gap-[15px]">
+              <Button type="primary" onClick={() => setExchangeRateModal(true)}><BsCurrencyExchange />USDT Exchange Rate</Button>
+              <Button
+                type="primary"
+                onClick={async () => {
+                  if (!dateRange?.[0])
+                    return notification.error({
+                      message: "Error",
+                      description: "Select Date Range",
+                      placement: "topRight",
+                    });
+                  handleDownloadReport();
+                }}
+                disabled={loader}
+              >
+                {loader ? (
+                  <p className=""><IoMdDownload className="inline-block" /> Downloading Report...</p>
+                ) : (
+                  <p className=""><IoMdDownload className="inline-block" /> Download Report</p>
+                )}
+              </Button>
+            </div>
           </div>
           <div className="bg-white rounded-lg p-4">
             <div className="flex flex-col md:flex-row items-center justify-between pb-3">
@@ -838,15 +899,14 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                         </td>
                         <td className="p-4 text-[13px] font-[500]">
                           <span
-                            className={`px-2 py-1 rounded-[20px] text-nowrap text-[11px] font-[600] min-w-20 flex items-center justify-center ${
-                              transaction?.status === "Approved"
-                                ? "bg-[#10CB0026] text-[#0DA000]"
-                                : transaction?.status === "Pending"
+                            className={`px-2 py-1 rounded-[20px] text-nowrap text-[11px] font-[600] min-w-20 flex items-center justify-center ${transaction?.status === "Approved"
+                              ? "bg-[#10CB0026] text-[#0DA000]"
+                              : transaction?.status === "Pending"
                                 ? "bg-[#FFC70126] text-[#FFB800]"
                                 : transaction?.status === "Manual Verified"
-                                ? "bg-[#0865e851] text-[#0864E8]"
-                                : "bg-[#FF7A8F33] text-[#FF002A]"
-                            }`}
+                                  ? "bg-[#0865e851] text-[#0864E8]"
+                                  : "bg-[#FF7A8F33] text-[#FF002A]"
+                              }`}
                           >
                             {transaction?.status?.charAt(0).toUpperCase() +
                               transaction?.status?.slice(1)}
@@ -961,15 +1021,14 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                           <FaIndianRupeeSign className="mt-[2px]" />
                         ) : null
                       }
-                      className={`w-[50%] text-[12px] input-placeholder-black ${
-                        isEdit &&
+                      className={`w-[50%] text-[12px] input-placeholder-black ${isEdit &&
                         (field.label === "Amount:" || field?.label === "UTR#:")
-                          ? "bg-white"
-                          : "bg-gray-200"
-                      }`}
+                        ? "bg-white"
+                        : "bg-gray-200"
+                        }`}
                       readOnly={
                         isEdit &&
-                        (field.label === "Amount:" || field?.label === "UTR#:")
+                          (field.label === "Amount:" || field?.label === "UTR#:")
                           ? false
                           : true
                       }
@@ -1010,11 +1069,10 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                     Approve Transaction
                   </button>
                   <button
-                    className={`flex p-2 rounded text-[13px] ${
-                      declineButtonClicked
-                        ? "bg-[#140e0f33] text-black"
-                        : "bg-[#FF405F33] hover:bg-[#FF405F50] text-[#FF3F5F]"
-                    }`}
+                    className={`flex p-2 rounded text-[13px] ${declineButtonClicked
+                      ? "bg-[#140e0f33] text-black"
+                      : "bg-[#FF405F33] hover:bg-[#FF405F50] text-[#FF3F5F]"
+                      }`}
                     onClick={() =>
                       setDeclinedButtonClicked(!declineButtonClicked)
                     }
@@ -1040,15 +1098,14 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                   </div>
                   <div className="flex items-center mt-4">
                     <span
-                      className={`text-nowrap text-[16px] font-[700] flex items-center justify-center ${
-                        selectedTransaction?.status === "Approved"
-                          ? "text-[#0DA000]"
-                          : selectedTransaction?.status === "Pending"
+                      className={`text-nowrap text-[16px] font-[700] flex items-center justify-center ${selectedTransaction?.status === "Approved"
+                        ? "text-[#0DA000]"
+                        : selectedTransaction?.status === "Pending"
                           ? "text-[#FFB800]"
                           : selectedTransaction?.status === "Manual Verified"
-                          ? "text-[#0864E8]"
-                          : "text-[#FF002A]"
-                      }`}
+                            ? "text-[#0864E8]"
+                            : "text-[#FF002A]"
+                        }`}
                     >
                       {selectedTransaction?.status}
                     </span>
@@ -1133,7 +1190,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                   </div>
                 </>
               )}
-              
+
               {/* Update transaction status */}
               {selectedTransaction?.status !== "Pending" && Cookies.get('type') === "admin" && (
                 <div className="flex flex-col mt-6">
@@ -1208,6 +1265,17 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
             </div>
           </div>
         )}
+      </Modal>
+      <Modal title="USDT Exchange Rate" width={500} open={exchangeRateModal} onClose={fn_closeExchangeModal} onCancel={fn_closeExchangeModal} footer={null} style={{ fontFamily: "sans-serif" }}>
+        <form className="flex flex-col gap-[20px] pt-[15px]" onSubmit={fn_submitRate}>
+          <Input addonBefore={<FaDollarSign />} value={1} />
+          <Input addonBefore={<FaIndianRupeeSign />} value={indianRate} onChange={(e) => setIndianRate(e.target.value)} placeholder="Enter Indian Rate" />
+          <hr />
+          <div className="flex gap-[10px]">
+            <Button type="default" className="w-full">Cancel</Button>
+            <Button type="primary" htmlType="submit" className="w-full">{savedRate ? "Update" : "Submit"}</Button>
+          </div>
+        </form>
       </Modal>
     </>
   );
