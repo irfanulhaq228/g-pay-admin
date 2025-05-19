@@ -1,56 +1,52 @@
 // import jsPDF from "jspdf";
+// import Cookies from "js-cookie";
+// import moment from "moment-timezone";
+// import { io } from "socket.io-client";
+// import { FiEye } from "react-icons/fi";
+// import { IoMdCheckmark, IoMdDownload } from "react-icons/io";
 // import { useNavigate } from "react-router-dom";
+// import { GoCircleSlash } from "react-icons/go";
 // import React, { useState, useEffect } from "react";
 // import "react-datepicker/dist/react-datepicker.css";
-// import moment from 'moment-timezone';
-// import { Pagination, Modal, Input, notification, DatePicker, Space, Select, Button, } from "antd";
-
-// import { FiEye } from "react-icons/fi";
-// import { IoMdCheckmark } from "react-icons/io";
-// import { GoCircleSlash } from "react-icons/go";
-// import { FaIndianRupeeSign } from "react-icons/fa6";
-// import BACKEND_URL, {
-//   fn_getAdminsTransactionApi,
-//   fn_getAllTransactionApi,
-//   fn_updateTransactionStatusApi,
-//   fn_getMerchantApi,
-//   fn_getOverAllBanksData,
-// } from "../../api/api";
-
-// // import { io } from "socket.io-client";
-
+// import { FaDollarSign, FaIndianRupeeSign } from "react-icons/fa6";
+// import { Pagination, Modal, Input, notification, DatePicker, Space, Select, Button } from "antd";
+// import BACKEND_URL, { fn_getAdminsTransactionApi, fn_getAllTransactionApi, fn_updateTransactionStatusApi, fn_getMerchantApi, fn_getOverAllBanksData, fn_setExchangeRate, fn_getExchangeRateApi } from "../../api/api";
+// import { BsCurrencyExchange } from "react-icons/bs";
 
 // const TransactionsTable = ({ authorization, showSidebar }) => {
-//   const navigate = useNavigate();
-//   // const socket = io(`${BACKEND_URL}/payment`);
 //   const searchParams = new URLSearchParams(location.search);
-
+  
+//   const navigate = useNavigate();
 //   const { RangePicker } = DatePicker;
 //   const [open, setOpen] = useState(false);
 //   const status = searchParams.get("status");
+//   const [allTrns, setAllTrns] = useState([]);
 //   const [isEdit, setIsEdit] = useState(false);
-//   const [totalPages, setTotalPages] = useState(1);
 //   const [loader, setLoader] = useState(false);
 //   const [loading, setLoading] = useState(true);
-
+//   const [allBanks, setAllBanks] = useState([]);
+//   const [totalPages, setTotalPages] = useState(1);
+//   const [savedRate, setSavedRate] = useState(null);
+//   const [indianRate, setIndianRate] = useState("");
 //   const containerHeight = window.innerHeight - 120;
+//   const [newStatus, setNewStatus] = useState(null);
 //   const [currentPage, setCurrentPage] = useState(1);
 //   const [searchQuery, setSearchQuery] = useState("");
-//   const [transactions, setTransactions] = useState([]);
 //   const [searchTrnId, setSearchTrnId] = useState("");
+//   const [allMerchant, setAllMerchant] = useState([]);
+//   const [isHovering, setIsHovering] = useState(false);
+//   const [transactions, setTransactions] = useState([]);
 //   const [merchant, setMerchant] = useState(status || "");
 //   const [dateRange, setDateRange] = useState([null, null]);
-//   const [declineButtonClicked, setDeclinedButtonClicked] = useState(false);
 //   const [editModalOpen, setEditModalOpen] = useState(false);
-//   const [selectedTransaction, setSelectedTransaction] = useState(null);
-//   const [allTrns, setAllTrns] = useState([]);
-//   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-//   const [isHovering, setIsHovering] = useState(false);
-//   const [selectedFilteredMerchant, setSelectedFilteredMerchant] = useState("");
-//   const [allMerchant, setAllMerchant] = useState([]);
 //   const [selectedOption, setSelectedOption] = useState(null);
-//   const [allBanks, setAllBanks] = useState([]);
+//   const socket = io(`${BACKEND_URL}`, { autoConnect: false });
+//   const [exchangeRateModal, setExchangeRateModal] = useState(false);
+//   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+//   const [selectedTransaction, setSelectedTransaction] = useState(null);
 //   const [selectedFilteredBank, setSelectedFilteredBank] = useState("");
+//   const [declineButtonClicked, setDeclinedButtonClicked] = useState(false);
+//   const [selectedFilteredMerchant, setSelectedFilteredMerchant] = useState("");
 
 //   const fetchMerchants = async () => {
 //     try {
@@ -67,6 +63,42 @@
 //     }
 //   };
 
+//   useEffect(() => {
+//     const userId = Cookies.get("adminId");
+
+//     if (!socket.connected) {
+//       socket.connect(); // Connect only if not already connected
+//       socket.emit("registerUser", { userId, role: "admin" });
+//     }
+
+//     return () => {
+//       socket.off("ledgerUpdated");
+//     };
+//   }, []);
+
+//   // Listen for real-time updates
+//   useEffect(() => {
+//     fn_getExchangeRate();
+//     socket.on("ledgerUpdated", (data) => {
+//       console.log("Ledger Update Received:", data);
+
+//       setTransactions((prevLedgers) => {
+//         if (data.type === "created") {
+//           return [data.ledger, ...prevLedgers];
+//         } else if (data.type === "updated") {
+//           return prevLedgers.map((ledger) =>
+//             ledger._id === data.ledger._id ? data.ledger : ledger
+//           );
+//         }
+//         return prevLedgers;
+//       });
+//     });
+
+//     return () => {
+//       socket.off("ledgerUpdated");
+//     };
+//   }, []);
+
 //   // useEffect(() => {
 //   //   socket.on("getMerchantLedger", (data) => {
 
@@ -74,33 +106,66 @@
 //   //     fetchTransactions(currentPage || 1, merchant);
 //   //   });
 
-
 //   //   socket.on("error", (error) => {
 //   //       console.error("Socket Error:", error.message);
 //   //   });
 
 //   // }, []);
 
+//   // const fetchBanks = async () => {
+//   //   try {
+//   //     const result = await fn_getOverAllBanksData("");
+//   //     if (result?.status) {
+//   //       setAllBanks(
+//   //         result?.data?.data?.map((item) => {
+//   //           return {
+//   //             value: item._id,
+//   //             label:
+//   //               item.bankName === "UPI" ? (
+//   //                 <span>
+//   //                   UPI - <span className="font-[400]">{item.iban}</span>
+//   //                 </span>
+//   //               ) : (
+//   //                 <span>
+//   //                   {item.bankName} -{" "}
+//   //                   <span className="font-[400]">{item.iban}</span>
+//   //                 </span>
+//   //               ),
+//   //           };
+//   //         })
+//   //       );
+//   //     }
+//   //   } catch (error) {
+//   //     console.error("Error fetching banks:", error);
+//   //   }
+//   // };
+
 //   const fetchBanks = async () => {
 //     try {
 //       const result = await fn_getOverAllBanksData("");
 //       if (result?.status) {
-//         setAllBanks(
-//           result?.data?.data?.map((item) => {
-//             return {
-//               value: item._id,
-//               label: item.bankName === "UPI" ? (
+//         const banks = result?.data?.data?.map((item) => {
+//           return {
+//             value: item._id,
+//             label:
+//               item.accountType === "upi" ? (
 //                 <span>
 //                   UPI - <span className="font-[400]">{item.iban}</span>
 //                 </span>
+//               ) : item.accountType === "crypto" ? (
+//                 <span>
+//                   Crypto - <span className="font-[400]">{item.iban}</span>
+//                 </span>
 //               ) : (
 //                 <span>
-//                   {item.bankName} - <span className="font-[400]">{item.iban}</span>
+//                   {item.bankName} -{" "}
+//                   <span className="font-[400]">{item.iban}</span>
 //                 </span>
 //               ),
-//             };
-//           })
-//         );
+//           };
+//         });
+
+//         setAllBanks(banks);
 //       }
 //     } catch (error) {
 //       console.error("Error fetching banks:", error);
@@ -186,28 +251,69 @@
 //     searchQuery,
 //     selectedFilteredMerchant,
 //     selectedFilteredBank,
-//     dateRange
+//     dateRange,
 //   ]);
 
 //   // Add effect to reset page when search params change
 //   useEffect(() => {
 //     setCurrentPage(1); // Reset to page 1 whenever search criteria changes
-//   }, [searchTrnId, searchQuery, selectedFilteredMerchant, selectedFilteredBank, dateRange, merchant]);
+//   }, [
+//     searchTrnId,
+//     searchQuery,
+//     selectedFilteredMerchant,
+//     selectedFilteredBank,
+//     dateRange,
+//     merchant,
+//   ]);
 
 //   const handleViewTransaction = (transaction) => {
+//     // Reset all states first
+//     setNewStatus(null);
+//     setDeclinedButtonClicked(false);
+//     setSelectedOption(null);
+//     setIsEdit(false);
+//     // Then set the new transaction
 //     setSelectedTransaction(transaction);
 //     setOpen(true);
 //   };
 
+//   // Add a new function to handle modal close
+//   const handleModalClose = () => {
+//     setOpen(false);
+//     setIsEdit(false);
+//     setNewStatus(null);
+//     setDeclinedButtonClicked(false);
+//     setSelectedOption(null);
+//     setSelectedTransaction(null);
+//   };
+
 //   const handleTransactionAction = async (action, transactionId) => {
-//     const response = await fn_updateTransactionStatusApi(transactionId, {
+//     const adminId = Cookies.get('adminId');
+//     const userType = Cookies.get('type');
+
+//     const payload = {
 //       status: action,
-//       trnStatus:
-//         action === "Approved" ? "Points Pending" : "Transaction Decline",
+//       // walletCredit: action === "Approved" ? true : false,
+//       trnStatus: action === "Approved" ? "Points Pending" : "Transaction Decline",
 //       transactionReason: selectedOption,
-//     });
+//     };
+
+//     // Add adminStaffId to payload if user type is staff
+//     if (userType === "staff") {
+//       payload.adminStaffId = adminId;
+//     }
+
+//     const response = await fn_updateTransactionStatusApi(transactionId, payload);
 //     if (response.status) {
-//       fetchTransactions(currentPage);
+//       // Fetch updated transactions
+//       await fetchTransactions(currentPage, merchant);
+//       // Fetch all transactions for the report
+//       await fetchAllTransactions(merchant);
+//       // Update the selected transaction in the modal
+//       const updatedTransaction = transactions.find(t => t._id === transactionId);
+//       if (updatedTransaction) {
+//         setSelectedTransaction(updatedTransaction);
+//       }
 //       notification.success({
 //         message: "Success",
 //         description: "Transaction Updated!",
@@ -215,6 +321,9 @@
 //       });
 //       setIsEdit(false);
 //       setOpen(false);
+//       setNewStatus(null);
+//       setDeclinedButtonClicked(false);
+//       setSelectedOption(null);
 //     } else {
 //       setIsEdit(false);
 //       console.error(`Failed to ${action} transaction:`, response.message);
@@ -260,7 +369,16 @@
 //       const firstPageRows = 12;
 //       const subsequentPageRows = 13;
 
-//       const headers = ["TRN-ID", "Date", "User Name", "Bank Name", "Merchant", "Amount", "UTR#", "Status"];
+//       const headers = [
+//         "TRN-ID",
+//         "Date",
+//         "User Name",
+//         "Bank Name",
+//         "Merchant",
+//         "Amount",
+//         "UTR#",
+//         "Status",
+//       ];
 //       const columnWidths = [25, 50, 25, 55, 30, 30, 35, 25];
 
 //       const startX = margin;
@@ -272,10 +390,13 @@
 //       pdf.setFontSize(16);
 //       pdf.text("Transaction Report", pageWidth / 2, 20, { align: "center" });
 //       pdf.setFontSize(12);
-//       pdf.text(`Generated on: ${new Date().toUTCString()}`, pageWidth / 2, 30, { align: "center" });
+//       pdf.text(`Generated on: ${new Date().toUTCString()}`, pageWidth / 2, 30, {
+//         align: "center",
+//       });
 
 //       // Calculate total pages needed
-//       const remainingTrns = allTrns.length > firstPageRows ? allTrns.length - firstPageRows : 0;
+//       const remainingTrns =
+//         allTrns.length > firstPageRows ? allTrns.length - firstPageRows : 0;
 //       const additionalPages = Math.ceil(remainingTrns / subsequentPageRows);
 //       const totalPages = additionalPages + (allTrns.length > 0 ? 1 : 0);
 
@@ -311,21 +432,32 @@
 //           currentX = startX;
 //           pdf.text(trn.trnNo?.toString() || "", currentX + 3, startY + 8);
 //           currentX += columnWidths[0];
-//           pdf.text(trn.createdAt ? `${moment.utc(trn?.createdAt).format('DD MMM YYYY, hh:mm A')}` : "", currentX + 3, startY + 8);
+//           pdf.text(
+//             trn.createdAt
+//               ? `${moment.utc(trn?.createdAt).format("DD MMM YYYY, hh:mm A")}`
+//               : "",
+//             currentX + 3,
+//             startY + 8
+//           );
 //           currentX += columnWidths[1];
 //           pdf.text(trn.username || "GUEST", currentX + 3, startY + 8);
 //           currentX += columnWidths[2];
 
 //           const bankName =
-//             trn.bankId?.bankName === "UPI" ? `UPI - ${trn.bankId?.iban || ""}` : trn.bankId?.bankName || "N/A";
+//             trn.bankId?.bankName === "UPI"
+//               ? `UPI - ${trn.bankId?.iban || ""}`
+//               : trn.bankId?.bankName || "N/A";
 //           pdf.text(bankName, currentX + 3, startY + 8);
 //           currentX += columnWidths[3];
 
-//           const merchantName = trn.merchantId?.merchantName || trn.merchant || "N/A";
+//           const merchantName =
+//             trn.merchantId?.merchantName || trn.merchant || "N/A";
 //           pdf.text(merchantName, currentX + 3, startY + 8);
 //           currentX += columnWidths[4];
 
-//           pdf.text(`${trn.total || "0"} INR`, currentX + 3, startY + 8, { align: "left" });
+//           pdf.text(`${trn.total || "0"} INR`, currentX + 3, startY + 8, {
+//             align: "left",
+//           });
 //           totalAmount += parseFloat(trn.total) || 0; // Add to totalAmount
 //           currentX += columnWidths[5];
 //           pdf.text(trn.utr?.toString() || "", currentX + 3, startY + 8);
@@ -360,7 +492,10 @@
 //         pdf.setFont("helvetica", "normal");
 //         pdf.setFontSize(9);
 
-//         const pageTransactions = allTrns.slice(processedTrns, processedTrns + subsequentPageRows);
+//         const pageTransactions = allTrns.slice(
+//           processedTrns,
+//           processedTrns + subsequentPageRows
+//         );
 //         pageTransactions.forEach((trn, index) => {
 //           startY += rowHeight;
 //           if (index % 2 === 1) {
@@ -371,21 +506,32 @@
 //           currentX = startX;
 //           pdf.text(trn.trnNo?.toString() || "", currentX + 3, startY + 8);
 //           currentX += columnWidths[0];
-//           pdf.text(trn.createdAt ? `${moment.utc(trn?.createdAt).format('DD MMM YYYY, hh:mm A')}` : "", currentX + 3, startY + 8);
+//           pdf.text(
+//             trn.createdAt
+//               ? `${moment.utc(trn?.createdAt).format("DD MMM YYYY, hh:mm A")}`
+//               : "",
+//             currentX + 3,
+//             startY + 8
+//           );
 //           currentX += columnWidths[1];
 //           pdf.text(trn.username || "GUEST", currentX + 3, startY + 8);
 //           currentX += columnWidths[2];
 
 //           const bankName =
-//             trn.bankId?.bankName === "UPI" ? `UPI - ${trn.bankId?.iban || ""}` : trn.bankId?.bankName || "N/A";
+//             trn.bankId?.bankName === "UPI"
+//               ? `UPI - ${trn.bankId?.iban || ""}`
+//               : trn.bankId?.bankName || "N/A";
 //           pdf.text(bankName, currentX + 3, startY + 8);
 //           currentX += columnWidths[3];
 
-//           const merchantName = trn.merchantId?.merchantName || trn.merchant || "N/A";
+//           const merchantName =
+//             trn.merchantId?.merchantName || trn.merchant || "N/A";
 //           pdf.text(merchantName, currentX + 3, startY + 8);
 //           currentX += columnWidths[4];
 
-//           pdf.text(`${trn.total || "0"} INR`, currentX + 3, startY + 8, { align: "left" });
+//           pdf.text(`${trn.total || "0"} INR`, currentX + 3, startY + 8, {
+//             align: "left",
+//           });
 //           totalAmount += parseFloat(trn.total) || 0; // Add to totalAmount
 //           currentX += columnWidths[5];
 //           pdf.text(trn.utr?.toString() || "", currentX + 3, startY + 8);
@@ -407,10 +553,23 @@
 //       let currentX = startX;
 //       pdf.setFontSize(10);
 //       pdf.text("Subtotal", currentX + 3, lastPageStartY + 8); // Label for subtotal
-//       currentX += columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3] + columnWidths[4] + columnWidths[5]; // Skip other columns for subtotal row
-//       pdf.text(`${totalAmount.toFixed(2)} INR`, currentX + 3, lastPageStartY + 8, { align: "left" }); // Total amount
+//       currentX +=
+//         columnWidths[0] +
+//         columnWidths[1] +
+//         columnWidths[2] +
+//         columnWidths[3] +
+//         columnWidths[4] +
+//         columnWidths[5]; // Skip other columns for subtotal row
+//       pdf.text(
+//         `${totalAmount.toFixed(2)} INR`,
+//         currentX + 3,
+//         lastPageStartY + 8,
+//         { align: "left" }
+//       ); // Total amount
 
-//       pdf.save(`transaction_report_${new Date().toISOString().slice(0, 10)}.pdf`);
+//       pdf.save(
+//         `transaction_report_${new Date().toISOString().slice(0, 10)}.pdf`
+//       );
 //       setLoader(false);
 //       notification.success({
 //         message: "Success",
@@ -428,8 +587,68 @@
 //     }
 //   };
 
+//   const fn_closeExchangeModal = () => {
+//     setExchangeRateModal(false);
+//   };
+
+//   const fn_submitRate = async (e) => {
+//     e.preventDefault();
+//     if (!indianRate || indianRate === "") {
+//       notification.error({
+//         message: "Error",
+//         description: "Please enter a valid rate.",
+//         placement: "topRight",
+//       });
+//       return;
+//     }
+//     const payload = {
+//       coin: 1, inr: Number(indianRate)
+//     };
+//     if (savedRate) {
+//       payload.id = savedRate._id;
+//     }
+//     const result = await fn_setExchangeRate(payload);
+//     if (result.status) {
+//       setExchangeRateModal(false);
+//       setIndianRate("");
+//       fn_getExchangeRate();
+//       notification.success({
+//         message: "Success",
+//         description: "Exchange rate updated successfully!",
+//         placement: "topRight",
+//       });
+//     } else {
+//       notification.error({
+//         message: "Error",
+//         description: result.message,
+//         placement: "topRight",
+//       });
+//     }
+//   };
+
+//   const fn_getExchangeRate = async () => {
+//     const response = await fn_getExchangeRateApi();
+//     if (response?.status) {
+//       setIndianRate(response?.data?.inr || "");
+//       setSavedRate(response?.data);
+//     }
+//   };
+
 //   function getMonthName(monthIndex) {
-//     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+//     const months = [
+//       "Jan",
+//       "Feb",
+//       "Mar",
+//       "Apr",
+//       "May",
+//       "Jun",
+//       "Jul",
+//       "Aug",
+//       "Sep",
+//       "Oct",
+//       "Nov",
+//       "Dec",
+//     ];
 //     return months[monthIndex];
 //   }
 
@@ -447,26 +666,35 @@
 //               Dashboard - Data Table
 //             </p>
 //           </div>
-//           <div className="flex justify-end mb-2">
-//             <Button
-//               type="primary"
-//               onClick={async () => {
-//                 if (!dateRange?.[0])
-//                   return notification.error({
-//                     message: "Error",
-//                     description: "Select Date Range",
-//                     placement: "topRight",
-//                   });
-//                 handleDownloadReport();
-//               }}
-//               disabled={loader}
-//             >
-//               {loader ? (
-//                 <p className="">Downloading Report...</p>
-//               ) : (
-//                 <p className="">Download Report</p>
-//               )}
-//             </Button>
+//           <div className={`flex mb-2 ${savedRate ? "justify-between" : "justify-end"}`}>
+//             {savedRate && (
+//               <div>
+//                 <p className="text-[14px] font-[600] text-gray-500">For Crypto Payment:</p>
+//                 <p className="text-[14px] font-[600]">USDT Rate: <span className="text-green-600">1 USDT = {savedRate?.inr} INR</span></p>
+//               </div>
+//             )}
+//             <div className="flex gap-[15px]">
+//               <Button type="primary" onClick={() => setExchangeRateModal(true)}><BsCurrencyExchange />USDT Exchange Rate</Button>
+//               <Button
+//                 type="primary"
+//                 onClick={async () => {
+//                   if (!dateRange?.[0])
+//                     return notification.error({
+//                       message: "Error",
+//                       description: "Select Date Range",
+//                       placement: "topRight",
+//                     });
+//                   handleDownloadReport();
+//                 }}
+//                 disabled={loader}
+//               >
+//                 {loader ? (
+//                   <p className=""><IoMdDownload className="inline-block" /> Downloading Report...</p>
+//                 ) : (
+//                   <p className=""><IoMdDownload className="inline-block" /> Download Report</p>
+//                 )}
+//               </Button>
+//             </div>
 //           </div>
 //           <div className="bg-white rounded-lg p-4">
 //             <div className="flex flex-col md:flex-row items-center justify-between pb-3">
@@ -531,9 +759,7 @@
 //                     options={[
 //                       {
 //                         value: "",
-//                         label: (
-//                           <span className="text-gray-400">All Bank</span>
-//                         ),
+//                         label: <span className="text-gray-400">All Bank</span>,
 //                       },
 //                       ...allBanks,
 //                     ]}
@@ -590,7 +816,9 @@
 //                 <tbody>
 //                   {loading ? (
 //                     <tr>
-//                       <td colSpan="9" className="text-center p-4">Loading...</td>
+//                       <td colSpan="9" className="text-center p-4">
+//                         Loading...
+//                       </td>
 //                     </tr>
 //                   ) : transactions.length > 0 ? (
 //                     transactions.map((transaction) => (
@@ -602,14 +830,16 @@
 //                           {transaction?.trnNo}
 //                         </td>
 //                         <td className="p-4 text-[13px] font-[600] text-[#000000B2] whitespace-nowrap">
-//                           {moment.utc(transaction?.createdAt).format('DD MMM YYYY, hh:mm A')}
+//                           {moment
+//                             .utc(transaction?.createdAt)
+//                             .format("DD MMM YYYY, hh:mm A")}
 //                         </td>
-//                         <td className="p-4 text-[13px] font-[700] text-[#000000B2]">
+//                         <td className="p-4 text-[13px] font-[700] text-[#000000B2] text-nowrap">
 //                           {transaction?.username && transaction?.username !== ""
 //                             ? transaction?.username
 //                             : "GUEST"}
 //                         </td>
-//                         <td className="p-4 text-nowrap">
+//                         {/* <td className="p-4 text-nowrap">
 //                           {transaction?.bankId?.bankName !== "UPI" ? (
 //                             <div className="">
 //                               <span className="text-[13px] font-[700] text-black whitespace-nowrap">
@@ -623,13 +853,55 @@
 //                               </p>
 //                             </div>
 //                           )}
+//                         </td> */}
+//                         <td className="p-4 text-nowrap">
+//                           {transaction?.bankId?.accountType === "upi" ? (
+//                             <div className="">
+//                               <p className="text-[13px] font-[700] text-black">
+//                                 UPI
+//                                 <span className="font-[400]">
+//                                   {" "}
+//                                   - {transaction?.bankId?.iban}
+//                                 </span>
+//                               </p>
+//                             </div>
+//                           ) : transaction?.bankId?.accountType === "crypto" ? (
+//                             <div className="">
+//                               <p className="text-[13px] font-[700] text-black">
+//                                 Crypto
+//                                 <span className="font-[400]">
+//                                   {" "}
+//                                   - {transaction?.bankId?.iban}
+//                                 </span>
+//                               </p>
+//                             </div>
+//                           ) : (
+//                             <div className="">
+//                               <span className="text-[13px] font-[700] text-black whitespace-nowrap">
+//                                 {transaction?.bankId?.bankName}
+//                                 <span className="font-[400]">
+//                                   {" "}
+//                                   - {transaction?.bankId?.accountNo}
+//                                 </span>
+//                               </span>
+//                             </div>
+//                           )}
 //                         </td>
 //                         <td className="p-4 text-[13px] font-[600] text-[#000000B2]">
 //                           {transaction?.merchantId?.merchantName}
 //                         </td>
 //                         <td className="p-4 text-[13px] font-[700] text-[#000000B2]">
-//                           <FaIndianRupeeSign className="inline-block mt-[-1px]" />{" "}
-//                           {transaction?.total}
+//                           {transaction?.bankId?.accountType === "crypto" ? (
+//                             <div>
+//                               <span className="text-[#000000B2]">$ {transaction?.dollarAmount}</span>
+//                               <span className= "text-[#000000B2] ml-2">/ ₹ {transaction?.total}</span>
+//                             </div>
+//                           ) : (
+//                             <div>
+//                               <FaIndianRupeeSign className="inline-block mt-[-1px]" />{" "}
+//                               {transaction?.total}
+//                             </div>
+//                           )}
 //                         </td>
 //                         <td className="p-4 text-[12px] font-[700] text-[#0864E8]">
 //                           {transaction?.utr}
@@ -699,14 +971,8 @@
 //         }}
 //         title={<p className="text-[20px] font-[700]">Transaction Details</p>}
 //         open={open}
-//         onCancel={() => {
-//           setOpen(false);
-//           setIsEdit(false);
-//         }}
-//         onClose={() => {
-//           setOpen(false);
-//           setIsEdit(false);
-//         }}
+//         onCancel={handleModalClose}
+//         onClose={handleModalClose}
 //       >
 //         {selectedTransaction && (
 //           <div className="flex flex-col md:flex-row">
@@ -722,6 +988,8 @@
 //                 {
 //                   label: "Amount:",
 //                   value: selectedTransaction?.total,
+//                   isCrypto: selectedTransaction?.bankId?.accountType === "crypto",
+//                   dollarAmount: selectedTransaction?.dollarAmount
 //                 },
 //                 {
 //                   label: "UTR#:",
@@ -729,7 +997,9 @@
 //                 },
 //                 {
 //                   label: "Date & Time:",
-//                   value: `${moment.utc(selectedTransaction?.createdAt).format('DD MMM YYYY, hh:mm A')}`,
+//                   value: `${moment
+//                     .utc(selectedTransaction?.createdAt)
+//                     .format("DD MMM YYYY, hh:mm A")}`,
 //                 },
 //                 {
 //                   label: "Bank Name:",
@@ -755,6 +1025,12 @@
 //                         resize: "none",
 //                       }}
 //                     />
+//                   ) : field.isCrypto ? (
+//                     <div className="w-[50%] text-[12px] input-placeholder-black bg-gray-200 p-2">
+//                       <span>$ {field.dollarAmount}</span>
+//                       <span className="ml-2">/ ₹ {field.value}</span>
+//                     </div>
+
 //                   ) : (
 //                     <Input
 //                       prefix={
@@ -833,7 +1109,9 @@
 //               {selectedTransaction?.trnStatus !== "Transaction Pending" && (
 //                 <div>
 //                   <div className="flex items-center mt-4">
-//                     <p className="text-[14px] font-[700] mr-2">Transaction Activity:</p>
+//                     <p className="text-[14px] font-[700] mr-2">
+//                       Transaction Activity:
+//                     </p>
 //                   </div>
 //                   <div className="flex items-center mt-4">
 //                     <span
@@ -849,7 +1127,9 @@
 //                       {selectedTransaction?.status}
 //                     </span>
 //                     <p className="text-[14px] font-[400] ml-6">
-//                       {moment(selectedTransaction?.updatedAt).tz('Asia/Kolkata').format('DD MMM YYYY, hh:mm A')}
+//                       {moment(selectedTransaction?.updatedAt)
+//                         .tz("Asia/Kolkata")
+//                         .format("DD MMM YYYY, hh:mm A")}
 //                     </p>
 //                   </div>
 //                 </div>
@@ -857,14 +1137,16 @@
 
 //               {selectedTransaction?.transactionReason ? (
 //                 <div className="flex items-center mt-2">
-//                   <p className="text-[14px] font-[700] mr-2">Reason for Decline:</p>
+//                   <p className="text-[14px] font-[700] mr-2">
+//                     Reason for Decline:
+//                   </p>
 //                   <p className="text-[14px] font-[400] capitalize">
 //                     {selectedTransaction?.transactionReason}
 //                   </p>
 //                 </div>
 //               ) : null}
 
-//               {declineButtonClicked && (
+//               {(declineButtonClicked || newStatus === "Decline") && (
 //                 <>
 //                   <p className="text-[14px] font-[700]">
 //                     Select Reason for Decline
@@ -900,27 +1182,78 @@
 //                             placement: "topRight",
 //                           });
 //                           return;
-//                         } else {
-//                           handleTransactionAction(
-//                             "Decline",
-//                             selectedTransaction?._id
-//                           );
-//                           setDeclinedButtonClicked(!declineButtonClicked);
 //                         }
+//                         handleTransactionAction(
+//                           newStatus || "Decline",
+//                           selectedTransaction?._id
+//                         );
+//                         setNewStatus(null);
+//                         setDeclinedButtonClicked(false);
+//                         setSelectedOption(null);
 //                       }}
 //                     >
 //                       Submit
 //                     </button>
 //                     <button
 //                       className="bg-gray-200 flex text-black py-2 px-[20px] rounded text-[13px] w-[max-content]"
-//                       onClick={() =>
-//                         setDeclinedButtonClicked(!declineButtonClicked)
-//                       }
+//                       onClick={() => {
+//                         setNewStatus(null);
+//                         setDeclinedButtonClicked(false);
+//                         setSelectedOption(null);
+//                       }}
 //                     >
 //                       Cancel
 //                     </button>
 //                   </div>
 //                 </>
+//               )}
+
+//               {/* Update transaction status */}
+//               {selectedTransaction?.status !== "Pending" && Cookies.get('type') === "admin" && (
+//                 <div className="flex flex-col mt-6">
+//                   <div className="flex items-center gap-3">
+//                     <p className="text-[14px] font-[700] text-nowrap">Update Status:</p>
+//                     <Select
+//                       key={selectedTransaction?._id}
+//                       style={{ width: 200 }}
+//                       placeholder="Select new status"
+//                       value={newStatus}
+//                       onChange={(value) => {
+//                         setNewStatus(value);
+//                         if (value === "Decline") {
+//                           setDeclinedButtonClicked(true);
+//                         } else {
+//                           setDeclinedButtonClicked(false);
+//                           setSelectedOption(null);
+//                         }
+//                       }}
+//                     >
+//                       {selectedTransaction?.status === "Approved" ? (
+//                         <Select.Option value="Decline">Decline</Select.Option>
+//                       ) : selectedTransaction?.status === "Decline" ? (
+//                         <Select.Option value="Approved">Approve</Select.Option>
+//                       ) : null}
+//                     </Select>
+//                   </div>
+//                   {newStatus && newStatus !== "Decline" && (
+//                     <button
+//                       className="bg-[#03996933] flex text-[#039969] p-1.5 rounded hover:bg-[#03996950] text-[13px] mt-3 w-fit"
+//                       onClick={() => {
+//                         handleTransactionAction(newStatus, selectedTransaction?._id);
+//                         setNewStatus(null);
+//                       }}
+//                     >
+//                       Update Status
+//                     </button>
+//                   )}
+//                   {selectedTransaction && (
+//                     <div className="flex items-center mt-3">
+//                       <p className="text-[14px] font-[600]">
+//                         Updated By: <span className="font-[500] ml-4">{selectedTransaction?.adminStaffId?.userName || "Admin"}</span>
+//                       </p>
+//                     </div>
+//                   )}
+//                 </div>
 //               )}
 //             </div>
 //             {/* Right side with border and image */}
@@ -949,6 +1282,17 @@
 //             </div>
 //           </div>
 //         )}
+//       </Modal>
+//       <Modal title="USDT Exchange Rate" width={500} open={exchangeRateModal} onClose={fn_closeExchangeModal} onCancel={fn_closeExchangeModal} footer={null} style={{ fontFamily: "sans-serif" }}>
+//         <form className="flex flex-col gap-[20px] pt-[15px]" onSubmit={fn_submitRate}>
+//           <Input addonBefore={<FaDollarSign />} value={1} />
+//           <Input addonBefore={<FaIndianRupeeSign />} value={indianRate} onChange={(e) => setIndianRate(e.target.value)} placeholder="Enter Indian Rate" />
+//           <hr />
+//           <div className="flex gap-[10px]">
+//             <Button type="default" className="w-full">Cancel</Button>
+//             <Button type="primary" htmlType="submit" className="w-full">{savedRate ? "Update" : "Submit"}</Button>
+//           </div>
+//         </form>
 //       </Modal>
 //     </>
 //   );

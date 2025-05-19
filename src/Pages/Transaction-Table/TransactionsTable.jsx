@@ -891,8 +891,17 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                           {transaction?.merchantId?.merchantName}
                         </td>
                         <td className="p-4 text-[13px] font-[700] text-[#000000B2]">
-                          <FaIndianRupeeSign className="inline-block mt-[-1px]" />{" "}
-                          {transaction?.total}
+                          {transaction?.bankId?.accountType === "crypto" ? (
+                            <div>
+                              <span className="text-[#000000B2]">$ {transaction?.dollarAmount}</span>
+                              <span className= "text-[#000000B2] ml-2">/ ₹ {transaction?.total}</span>
+                            </div>
+                          ) : (
+                            <div>
+                              <FaIndianRupeeSign className="inline-block mt-[-1px]" />{" "}
+                              {transaction?.total}
+                            </div>
+                          )}
                         </td>
                         <td className="p-4 text-[12px] font-[700] text-[#0864E8]">
                           {transaction?.utr}
@@ -949,7 +958,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
       <Modal
         centered
         footer={null}
-        width={900}
+        width={1100}
         style={{
           fontFamily: "sans-serif",
           padding: "20px",
@@ -979,6 +988,8 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                 {
                   label: "Amount:",
                   value: selectedTransaction?.total,
+                  isCrypto: selectedTransaction?.bankId?.accountType === "crypto",
+                  dollarAmount: selectedTransaction?.dollarAmount
                 },
                 {
                   label: "UTR#:",
@@ -1014,6 +1025,12 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                         resize: "none",
                       }}
                     />
+                  ) : field.isCrypto ? (
+                    <div className="w-[50%] text-[12px] input-placeholder-black bg-gray-200 p-2">
+                      <span>$ {field.dollarAmount}</span>
+                      <span className="ml-2">/ ₹ {field.value}</span>
+                    </div>
+
                   ) : (
                     <Input
                       prefix={

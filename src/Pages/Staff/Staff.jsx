@@ -201,9 +201,9 @@ const Staff = ({ showSidebar }) => {
             userName: staff?.userName,
             email: staff?.email,
             password: staff?.password,
-            ledgerType: staff?.ledgerType,
-            ledgerBank: staff?.ledgerBank,
-            ledgerMerchant: staff?.ledgerMerchant,
+            // ledgerType: staff?.ledgerType,
+            // ledgerBank: staff?.ledgerBank,
+            // ledgerMerchant: staff?.ledgerMerchant,
             id: staff?._id
         }))
     };
@@ -211,7 +211,7 @@ const Staff = ({ showSidebar }) => {
     console.log("editForm ", editForm);
 
     const fn_update = async () => {
-        if (editForm?.userName === "" || editForm?.email === "" || editForm?.password === "" || editForm?.ledgerType?.length === 0 || editForm?.ledgerMerchant?.length === 0 || editForm?.ledgerBank?.length === 0) {
+        if (editForm?.userName === "" || editForm?.email === "" || editForm?.password === "") {
             return notification.error({
                 message: "Error",
                 description: "Fill Complete Form",
@@ -435,7 +435,7 @@ const Staff = ({ showSidebar }) => {
                         <Input.Password value={editForm.password} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} placeholder="Enter password" />
                     </div>
 
-                    <div>
+                    {/* <div>
                         <p className="text-sm font-medium mb-1">Select Transaction Type{" "}<span className="text-red-500">*</span></p>
                         <Select
                             mode="multiple"
@@ -449,7 +449,6 @@ const Staff = ({ showSidebar }) => {
                             options={transactionTypeOptions}
                         />
                     </div>
-
                     <div>
                         <p className="text-sm font-medium mb-1">Select Merchant{" "}<span className="text-red-500">*</span></p>
                         <Select
@@ -462,7 +461,6 @@ const Staff = ({ showSidebar }) => {
                             options={merchantOptions}
                         />
                     </div>
-
                     <div>
                         <p className="text-sm font-medium mb-1">Select Banks{" "}<span className="text-red-500">*</span></p>
                         <Select
@@ -474,7 +472,7 @@ const Staff = ({ showSidebar }) => {
                             value={editForm.ledgerBank}
                             options={banksOption}
                         />
-                    </div>
+                    </div> */}
                 </div>
             </Modal>
         </>

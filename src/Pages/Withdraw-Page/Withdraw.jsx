@@ -338,15 +338,19 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
             }
 
             const token = Cookies.get("token");
-            const userId = Cookies.get('userId')
-            const type = Cookies.get('type')
+            const userId = Cookies.get('userId');
+            const type = Cookies.get('type');
             const formData = new FormData();
             formData.append("status", action);
             formData.append("utr", utr);
-            if (type === 'staff'){
-                formData.append("adminStaffId", userId)
+            
+            // Only append adminStaffId if type is staff and userId exists
+            if (type === 'staff' && userId) {
+                formData.append("adminStaffId", userId);
             }
+            
             if (image) formData.append("image", image);
+            
             const response = await axios.put(`${BACKEND_URL}/withdraw/update/${id}`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -363,6 +367,11 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
             }
         } catch (error) {
             console.log('Error in handle Transaction Action:', error);
+            notification.error({
+                message: "Error",
+                description: error?.response?.data?.message || "Failed to update transaction",
+                placement: "topRight",
+            });
         }
     };
 
