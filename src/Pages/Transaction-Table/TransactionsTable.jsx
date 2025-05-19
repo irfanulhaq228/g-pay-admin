@@ -9,13 +9,30 @@ import { GoCircleSlash } from "react-icons/go";
 import React, { useState, useEffect } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaDollarSign, FaIndianRupeeSign } from "react-icons/fa6";
-import { Pagination, Modal, Input, notification, DatePicker, Space, Select, Button } from "antd";
-import BACKEND_URL, { fn_getAdminsTransactionApi, fn_getAllTransactionApi, fn_updateTransactionStatusApi, fn_getMerchantApi, fn_getOverAllBanksData, fn_setExchangeRate, fn_getExchangeRateApi } from "../../api/api";
+import {
+  Pagination,
+  Modal,
+  Input,
+  notification,
+  DatePicker,
+  Space,
+  Select,
+  Button,
+} from "antd";
+import BACKEND_URL, {
+  fn_getAdminsTransactionApi,
+  fn_getAllTransactionApi,
+  fn_updateTransactionStatusApi,
+  fn_getMerchantApi,
+  fn_getOverAllBanksData,
+  fn_setExchangeRate,
+  fn_getExchangeRateApi,
+} from "../../api/api";
 import { BsCurrencyExchange } from "react-icons/bs";
 
 const TransactionsTable = ({ authorization, showSidebar }) => {
   const searchParams = new URLSearchParams(location.search);
-  
+
   const navigate = useNavigate();
   const { RangePicker } = DatePicker;
   const [open, setOpen] = useState(false);
@@ -288,14 +305,15 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
   };
 
   const handleTransactionAction = async (action, transactionId) => {
-    const adminId = Cookies.get('adminId');
-    const userType = Cookies.get('type');
+    const adminId = Cookies.get("adminId");
+    const userType = Cookies.get("type");
 
     const payload = {
       status: action,
       // walletCredit: action === "Approved" ? true : false,
-      trnStatus: action === "Approved" ? "Points Pending" : "Transaction Decline",
-      transactionReason: selectedOption,
+      trnStatus:
+        action === "Approved" ? "Points Pending" : "Transaction Decline",
+      reason: selectedOption,
     };
 
     // Add adminStaffId to payload if user type is staff
@@ -303,14 +321,19 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
       payload.adminStaffId = adminId;
     }
 
-    const response = await fn_updateTransactionStatusApi(transactionId, payload);
+    const response = await fn_updateTransactionStatusApi(
+      transactionId,
+      payload
+    );
     if (response.status) {
       // Fetch updated transactions
       await fetchTransactions(currentPage, merchant);
       // Fetch all transactions for the report
       await fetchAllTransactions(merchant);
       // Update the selected transaction in the modal
-      const updatedTransaction = transactions.find(t => t._id === transactionId);
+      const updatedTransaction = transactions.find(
+        (t) => t._id === transactionId
+      );
       if (updatedTransaction) {
         setSelectedTransaction(updatedTransaction);
       }
@@ -602,7 +625,8 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
       return;
     }
     const payload = {
-      coin: 1, inr: Number(indianRate)
+      coin: 1,
+      inr: Number(indianRate),
     };
     if (savedRate) {
       payload.id = savedRate._id;
@@ -656,8 +680,9 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
     <>
       <div
         style={{ minHeight: `${containerHeight}px` }}
-        className={`bg-gray-100 transition-all duration-500 ${showSidebar ? "pl-0 md:pl-[270px]" : "pl-0"
-          }`}
+        className={`bg-gray-100 transition-all duration-500 ${
+          showSidebar ? "pl-0 md:pl-[270px]" : "pl-0"
+        }`}
       >
         <div className="p-7">
           <div className="flex flex-col md:flex-row gap-[12px] items-center justify-between mb-4">
@@ -666,15 +691,29 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
               Dashboard - Data Table
             </p>
           </div>
-          <div className={`flex mb-2 ${savedRate ? "justify-between" : "justify-end"}`}>
+          <div
+            className={`flex mb-2 ${
+              savedRate ? "justify-between" : "justify-end"
+            }`}
+          >
             {savedRate && (
               <div>
-                <p className="text-[14px] font-[600] text-gray-500">For Crypto Payment:</p>
-                <p className="text-[14px] font-[600]">USDT Rate: <span className="text-green-600">1 USDT = {savedRate?.inr} INR</span></p>
+                <p className="text-[14px] font-[600] text-gray-500">
+                  For Crypto Payment:
+                </p>
+                <p className="text-[14px] font-[600]">
+                  USDT Rate:{" "}
+                  <span className="text-green-600">
+                    1 USDT = {savedRate?.inr} INR
+                  </span>
+                </p>
               </div>
             )}
             <div className="flex gap-[15px]">
-              <Button type="primary" onClick={() => setExchangeRateModal(true)}><BsCurrencyExchange />USDT Exchange Rate</Button>
+              <Button type="primary" onClick={() => setExchangeRateModal(true)}>
+                <BsCurrencyExchange />
+                USDT Exchange Rate
+              </Button>
               <Button
                 type="primary"
                 onClick={async () => {
@@ -689,9 +728,14 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                 disabled={loader}
               >
                 {loader ? (
-                  <p className=""><IoMdDownload className="inline-block" /> Downloading Report...</p>
+                  <p className="">
+                    <IoMdDownload className="inline-block" /> Downloading
+                    Report...
+                  </p>
                 ) : (
-                  <p className=""><IoMdDownload className="inline-block" /> Download Report</p>
+                  <p className="">
+                    <IoMdDownload className="inline-block" /> Download Report
+                  </p>
                 )}
               </Button>
             </div>
@@ -893,8 +937,12 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                         <td className="p-4 text-[13px] font-[700] text-[#000000B2]">
                           {transaction?.bankId?.accountType === "crypto" ? (
                             <div>
-                              <span className="text-[#000000B2]">$ {transaction?.dollarAmount}</span>
-                              <span className= "text-[#000000B2] ml-2">/ ₹ {transaction?.total}</span>
+                              <span className="text-[#000000B2]">
+                                $ {transaction?.dollarAmount}
+                              </span>
+                              <span className="text-[#000000B2] ml-2">
+                                / ₹ {transaction?.total}
+                              </span>
                             </div>
                           ) : (
                             <div>
@@ -908,14 +956,15 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                         </td>
                         <td className="p-4 text-[13px] font-[500]">
                           <span
-                            className={`px-2 py-1 rounded-[20px] text-nowrap text-[11px] font-[600] min-w-20 flex items-center justify-center ${transaction?.status === "Approved"
-                              ? "bg-[#10CB0026] text-[#0DA000]"
-                              : transaction?.status === "Pending"
+                            className={`px-2 py-1 rounded-[20px] text-nowrap text-[11px] font-[600] min-w-20 flex items-center justify-center ${
+                              transaction?.status === "Approved"
+                                ? "bg-[#10CB0026] text-[#0DA000]"
+                                : transaction?.status === "Pending"
                                 ? "bg-[#FFC70126] text-[#FFB800]"
                                 : transaction?.status === "Manual Verified"
-                                  ? "bg-[#0865e851] text-[#0864E8]"
-                                  : "bg-[#FF7A8F33] text-[#FF002A]"
-                              }`}
+                                ? "bg-[#0865e851] text-[#0864E8]"
+                                : "bg-[#FF7A8F33] text-[#FF002A]"
+                            }`}
                           >
                             {transaction?.status?.charAt(0).toUpperCase() +
                               transaction?.status?.slice(1)}
@@ -958,7 +1007,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
       <Modal
         centered
         footer={null}
-        width={1100}
+        width={1000}
         style={{
           fontFamily: "sans-serif",
           padding: "20px",
@@ -977,7 +1026,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
         {selectedTransaction && (
           <div className="flex flex-col md:flex-row">
             {/* Left side input fields */}
-            <div className="flex flex-col gap-2 mt-3 w-full md:w-1/2">
+            <div className="flex flex-col gap-2 mt-3 w-full md:w-1/1">
               <p className="font-[500] mt-[-8px] mb-[15px]">
                 Transaction Id:{" "}
                 <span className="text-gray-500 font-[700]">
@@ -988,8 +1037,9 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                 {
                   label: "Amount:",
                   value: selectedTransaction?.total,
-                  isCrypto: selectedTransaction?.bankId?.accountType === "crypto",
-                  dollarAmount: selectedTransaction?.dollarAmount
+                  isCrypto:
+                    selectedTransaction?.bankId?.accountType === "crypto",
+                  dollarAmount: selectedTransaction?.dollarAmount,
                 },
                 {
                   label: "UTR#:",
@@ -1030,7 +1080,6 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                       <span>$ {field.dollarAmount}</span>
                       <span className="ml-2">/ ₹ {field.value}</span>
                     </div>
-
                   ) : (
                     <Input
                       prefix={
@@ -1038,14 +1087,15 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                           <FaIndianRupeeSign className="mt-[2px]" />
                         ) : null
                       }
-                      className={`w-[50%] text-[12px] input-placeholder-black ${isEdit &&
+                      className={`w-[50%] text-[12px] input-placeholder-black ${
+                        isEdit &&
                         (field.label === "Amount:" || field?.label === "UTR#:")
-                        ? "bg-white"
-                        : "bg-gray-200"
-                        }`}
+                          ? "bg-white"
+                          : "bg-gray-200"
+                      }`}
                       readOnly={
                         isEdit &&
-                          (field.label === "Amount:" || field?.label === "UTR#:")
+                        (field.label === "Amount:" || field?.label === "UTR#:")
                           ? false
                           : true
                       }
@@ -1086,10 +1136,11 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                     Approve Transaction
                   </button>
                   <button
-                    className={`flex p-2 rounded text-[13px] ${declineButtonClicked
-                      ? "bg-[#140e0f33] text-black"
-                      : "bg-[#FF405F33] hover:bg-[#FF405F50] text-[#FF3F5F]"
-                      }`}
+                    className={`flex p-2 rounded text-[13px] ${
+                      declineButtonClicked
+                        ? "bg-[#140e0f33] text-black"
+                        : "bg-[#FF405F33] hover:bg-[#FF405F50] text-[#FF3F5F]"
+                    }`}
                     onClick={() =>
                       setDeclinedButtonClicked(!declineButtonClicked)
                     }
@@ -1106,52 +1157,13 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
 
               {/* Bottom Divider and Activity */}
               <div className="border-b w-[370px] mt-4"></div>
-              {selectedTransaction?.trnStatus !== "Transaction Pending" && (
-                <div>
-                  <div className="flex items-center mt-4">
-                    <p className="text-[14px] font-[700] mr-2">
-                      Transaction Activity:
-                    </p>
-                  </div>
-                  <div className="flex items-center mt-4">
-                    <span
-                      className={`text-nowrap text-[16px] font-[700] flex items-center justify-center ${selectedTransaction?.status === "Approved"
-                        ? "text-[#0DA000]"
-                        : selectedTransaction?.status === "Pending"
-                          ? "text-[#FFB800]"
-                          : selectedTransaction?.status === "Manual Verified"
-                            ? "text-[#0864E8]"
-                            : "text-[#FF002A]"
-                        }`}
-                    >
-                      {selectedTransaction?.status}
-                    </span>
-                    <p className="text-[14px] font-[400] ml-6">
-                      {moment(selectedTransaction?.updatedAt)
-                        .tz("Asia/Kolkata")
-                        .format("DD MMM YYYY, hh:mm A")}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {selectedTransaction?.transactionReason ? (
-                <div className="flex items-center mt-2">
-                  <p className="text-[14px] font-[700] mr-2">
-                    Reason for Decline:
-                  </p>
-                  <p className="text-[14px] font-[400] capitalize">
-                    {selectedTransaction?.transactionReason}
-                  </p>
-                </div>
-              ) : null}
 
               {(declineButtonClicked || newStatus === "Decline") && (
                 <>
-                  <p className="text-[14px] font-[700]">
+                  <p className="text-[14px] font-[700] mt-4">
                     Select Reason for Decline
                   </p>
-                  <div className="space-y-2">
+                  <div className="space-y-2 mt-2">
                     {options.map((option) => (
                       <label
                         key={option}
@@ -1171,7 +1183,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                       </label>
                     ))}
                   </div>
-                  <div className="flex gap-[10px]">
+                  <div className="flex gap-[10px] mt-4">
                     <button
                       className="bg-[#FF405F33] flex text-[#FF3F5F] py-2 px-[20px] rounded hover:bg-[#FF405F50] text-[13px] w-[max-content]"
                       onClick={() => {
@@ -1184,7 +1196,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                           return;
                         }
                         handleTransactionAction(
-                          newStatus || "Decline",
+                          "Decline",
                           selectedTransaction?._id
                         );
                         setNewStatus(null);
@@ -1208,11 +1220,20 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                 </>
               )}
 
-              {/* Update transaction status */}
-              {selectedTransaction?.status !== "Pending" && Cookies.get('type') === "admin" && (
-                <div className="flex flex-col mt-6">
+              {selectedTransaction?.trnStatus !== "Transaction Pending" && (
+                <div>
+                  <div className="flex items-center mt-4">
+                    <p className="text-[14px] font-[700] mr-2">
+                      Transaction Activity:
+                    </p>
+                  </div>
+                      {/* Update transaction status for admin */}
+              {selectedTransaction?.status !== "Pending" && Cookies.get("type") === "admin" && (
+                <div className="flex flex-col mt-3">
                   <div className="flex items-center gap-3">
-                    <p className="text-[14px] font-[700] text-nowrap">Update Status:</p>
+                    <p className="text-[14px] font-[700] text-nowrap">
+                      Update Status:
+                    </p>
                     <Select
                       key={selectedTransaction?._id}
                       style={{ width: 200 }}
@@ -1229,9 +1250,13 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                       }}
                     >
                       {selectedTransaction?.status === "Approved" ? (
-                        <Select.Option value="Decline">Decline</Select.Option>
+                        <Select.Option value="Decline">
+                          Decline
+                        </Select.Option>
                       ) : selectedTransaction?.status === "Decline" ? (
-                        <Select.Option value="Approved">Approve</Select.Option>
+                        <Select.Option value="Approved">
+                          Approve
+                        </Select.Option>
                       ) : null}
                     </Select>
                   </div>
@@ -1239,26 +1264,139 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                     <button
                       className="bg-[#03996933] flex text-[#039969] p-1.5 rounded hover:bg-[#03996950] text-[13px] mt-3 w-fit"
                       onClick={() => {
-                        handleTransactionAction(newStatus, selectedTransaction?._id);
+                        handleTransactionAction(
+                          newStatus,
+                          selectedTransaction?._id
+                        );
                         setNewStatus(null);
                       }}
                     >
                       Update Status
                     </button>
                   )}
-                  {selectedTransaction && (
-                    <div className="flex items-center mt-3">
-                      <p className="text-[14px] font-[600]">
-                        Updated By: <span className="font-[500] ml-4">{selectedTransaction?.adminStaffId?.userName || "Admin"}</span>
+                  {newStatus === "Decline" && (
+                    <>
+                      <p className="text-[14px] font-[700] mt-4">
+                        Select Reason for Decline
                       </p>
-                    </div>
+                      <div className="space-y-2 mt-2">
+                        {options.map((option) => (
+                          <label
+                            key={option}
+                            className="flex items-center space-x-3 cursor-pointer rounded-lg"
+                          >
+                            <input
+                              type="radio"
+                              name="issue"
+                              value={option}
+                              checked={selectedOption === option}
+                              onChange={() => setSelectedOption(option)}
+                              className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
+                            />
+                            <span className="text-gray-700 dark:text-gray-300">
+                              {option}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      <div className="flex gap-[10px] mt-4">
+                        <button
+                          className="bg-[#FF405F33] flex text-[#FF3F5F] py-2 px-[20px] rounded hover:bg-[#FF405F50] text-[13px] w-[max-content]"
+                          onClick={() => {
+                            if (!selectedOption) {
+                              notification.error({
+                                message: "Error",
+                                description: "Please select a reason for decline",
+                                placement: "topRight",
+                              });
+                              return;
+                            }
+                            handleTransactionAction(
+                              "Decline",
+                              selectedTransaction?._id
+                            );
+                            setNewStatus(null);
+                            setDeclinedButtonClicked(false);
+                            setSelectedOption(null);
+                          }}
+                        >
+                          Submit
+                        </button>
+                        <button
+                          className="bg-gray-200 flex text-black py-2 px-[20px] rounded text-[13px] w-[max-content]"
+                          onClick={() => {
+                            setNewStatus(null);
+                            setDeclinedButtonClicked(false);
+                            setSelectedOption(null);
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
               )}
+                  <div className="mt-4">
+                    <table className="w-[77%] border-collapse">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="p-2 text-center text-[12px] font-[600] border">
+                            Date
+                          </th>
+                          <th className="p-2 text-center text-[12px] font-[600] border text-nowrap">
+                            Action By
+                          </th>
+                          <th className="p-2 text-center text-[12px] font-[600] border">
+                            Status
+                          </th>
+                          <th className="p-2 text-[12px] font-[600] border text-center">
+                            Reason
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedTransaction?.transactionLogs?.map((log, index) => (
+                          <tr key={index}>
+                            <td className="p-2 text-[12px] border text-nowrap">
+                              {moment(log?.updatedAt)
+                                .tz("Asia/Kolkata")
+                                .format("DD MMM YYYY, hh:mm A")}
+                            </td>
+                            <td className="p-2 text-[12px] border">
+                              {log?.adminStaffId?.userName || "Admin"}
+                            </td>
+                            <td className="p-2 text-[12px] border">
+                              <span
+                                className={`px-2 py-1 rounded-[20px] text-nowrap text-[11px] font-[600] ${
+                                  log?.status === "Approved"
+                                    ? "bg-[#10CB0026] text-[#0DA000]"
+                                    : log?.status === "Pending"
+                                    ? "bg-[#FFC70126] text-[#FFB800]"
+                                    : log?.status === "Manual Verified"
+                                    ? "bg-[#0865e851] text-[#0864E8]"
+                                    : "bg-[#FF7A8F33] text-[#FF002A]"
+                                }`}
+                              >
+                                {log?.status}
+                              </span>
+                            </td>
+                            <td className="p-2 text-[12px] border text-nowrap text-center">
+                              {log?.reason || "-"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+          
             </div>
             {/* Right side with border and image */}
             <div
-              className="w-full md:w-1/2 md:border-l my-10 md:mt-0 pl-0 md:pl-6 flex flex-col justify-between items-center h-full"
+              className="w-full md:w-2/3 md:border-l my-10 md:mt-0 pl-0 md:pl-6 flex flex-col justify-between items-center h-full"
               style={{ aspectRatio: "1" }}
             >
               <div
@@ -1283,14 +1421,34 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
           </div>
         )}
       </Modal>
-      <Modal title="USDT Exchange Rate" width={500} open={exchangeRateModal} onClose={fn_closeExchangeModal} onCancel={fn_closeExchangeModal} footer={null} style={{ fontFamily: "sans-serif" }}>
-        <form className="flex flex-col gap-[20px] pt-[15px]" onSubmit={fn_submitRate}>
+      <Modal
+        title="USDT Exchange Rate"
+        width={500}
+        open={exchangeRateModal}
+        onClose={fn_closeExchangeModal}
+        onCancel={fn_closeExchangeModal}
+        footer={null}
+        style={{ fontFamily: "sans-serif" }}
+      >
+        <form
+          className="flex flex-col gap-[20px] pt-[15px]"
+          onSubmit={fn_submitRate}
+        >
           <Input addonBefore={<FaDollarSign />} value={1} />
-          <Input addonBefore={<FaIndianRupeeSign />} value={indianRate} onChange={(e) => setIndianRate(e.target.value)} placeholder="Enter Indian Rate" />
+          <Input
+            addonBefore={<FaIndianRupeeSign />}
+            value={indianRate}
+            onChange={(e) => setIndianRate(e.target.value)}
+            placeholder="Enter Indian Rate"
+          />
           <hr />
           <div className="flex gap-[10px]">
-            <Button type="default" className="w-full">Cancel</Button>
-            <Button type="primary" htmlType="submit" className="w-full">{savedRate ? "Update" : "Submit"}</Button>
+            <Button type="default" className="w-full">
+              Cancel
+            </Button>
+            <Button type="primary" htmlType="submit" className="w-full">
+              {savedRate ? "Update" : "Submit"}
+            </Button>
           </div>
         </form>
       </Modal>

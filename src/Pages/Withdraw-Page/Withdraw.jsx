@@ -509,7 +509,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                                         {transaction?.status}
                                                     </span>
                                                     {transaction?.createdBy === "admin" && (
-                                                        <p className="absolute bottom-[-2px] left-[20px] text-[10px] text-gray-600">Created by Admin</p>
+                                                        <p className="absolute bottom-[-2px] left-[20px] text-[10px] text-gray-600 text-nowrap">Created by Admin</p>
                                                     )}
                                                 </td>
                                                 <td className="p-4">

@@ -392,6 +392,19 @@ const Staff = ({ showSidebar }) => {
                         </p>
                         <Input.Password value={staffForm.password} onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })} placeholder="Enter password" />
                     </div>
+                    <div className="mt-4">
+                        <p className="text-sm font-medium mb-1">
+                            Edit Permission <span className="text-red-500">*</span>
+                        </p>
+                        <Radio.Group
+                            onChange={(e) => setStaffForm({ ...staffForm, editPermission: e.target.value })}
+                            value={staffForm.editPermission}
+                            style={{ marginBottom: 16 }}
+                        >
+                            <Radio value={true}>Yes</Radio>
+                            <Radio value={false}>No</Radio>
+                        </Radio.Group>
+                    </div>
 
                 </div>
             </Modal>
@@ -434,6 +447,21 @@ const Staff = ({ showSidebar }) => {
                         </p>
                         <Input.Password value={editForm.password} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} placeholder="Enter password" />
                     </div>
+
+                    <div className="mt-4">
+                        <p className="text-sm font-medium mb-1">
+                            Edit Permission <span className="text-red-500">*</span>
+                        </p>
+                        <Radio.Group
+                            onChange={(e) => setEditForm({ ...editForm, editPermission: e.target.value })}
+                            value={editForm.editPermission}
+                            style={{ marginBottom: 16 }}
+                        >
+                            <Radio value={true}>Yes</Radio>
+                            <Radio value={false}>No</Radio>
+                        </Radio.Group>
+                    </div>
+
 
                     {/* <div>
                         <p className="text-sm font-medium mb-1">Select Transaction Type{" "}<span className="text-red-500">*</span></p>
