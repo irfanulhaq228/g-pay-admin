@@ -29,6 +29,7 @@ import BACKEND_URL, {
   fn_getExchangeRateApi,
 } from "../../api/api";
 import { BsCurrencyExchange } from "react-icons/bs";
+import axios from "axios";
 
 const TransactionsTable = ({ authorization, showSidebar }) => {
   const searchParams = new URLSearchParams(location.search);
@@ -65,6 +66,8 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
   const [declineButtonClicked, setDeclinedButtonClicked] = useState(false);
   const [selectedFilteredMerchant, setSelectedFilteredMerchant] = useState("");
 
+  const [editPermission, setEditPermission] = useState(true);
+
   const fetchMerchants = async () => {
     try {
       const result = await fn_getMerchantApi();
@@ -93,9 +96,23 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
     };
   }, []);
 
+  const fn_getStaffDetials = async () => {
+    try {
+      const res = await axios.get(`${BACKEND_URL}/adminStaff/get/${Cookies.get("adminId")}`);
+      if (res?.status === 200) {
+        setEditPermission(res?.data?.data?.editPermission)
+      }
+    } catch (error) {
+      console.error("Error fetching staff details:", error);
+    }
+  }
+
   // Listen for real-time updates
   useEffect(() => {
     fn_getExchangeRate();
+    if (Cookies.get("type") === "staff") {
+      fn_getStaffDetials();
+    }
     socket.on("ledgerUpdated", (data) => {
       console.log("Ledger Update Received:", data);
 
@@ -680,9 +697,8 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
     <>
       <div
         style={{ minHeight: `${containerHeight}px` }}
-        className={`bg-gray-100 transition-all duration-500 ${
-          showSidebar ? "pl-0 md:pl-[270px]" : "pl-0"
-        }`}
+        className={`bg-gray-100 transition-all duration-500 ${showSidebar ? "pl-0 md:pl-[270px]" : "pl-0"
+          }`}
       >
         <div className="p-7">
           <div className="flex flex-col md:flex-row gap-[12px] items-center justify-between mb-4">
@@ -692,9 +708,8 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
             </p>
           </div>
           <div
-            className={`flex mb-2 ${
-              savedRate ? "justify-between" : "justify-end"
-            }`}
+            className={`flex mb-2 ${savedRate ? "justify-between" : "justify-end"
+              }`}
           >
             {savedRate && (
               <div>
@@ -958,15 +973,14 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                         </td>
                         <td className="p-4 text-[13px] font-[500]">
                           <span
-                            className={`px-2 py-1 rounded-[20px] text-nowrap text-[11px] font-[600] min-w-20 flex items-center justify-center ${
-                              transaction?.status === "Approved"
-                                ? "bg-[#10CB0026] text-[#0DA000]"
-                                : transaction?.status === "Pending"
+                            className={`px-2 py-1 rounded-[20px] text-nowrap text-[11px] font-[600] min-w-20 flex items-center justify-center ${transaction?.status === "Approved"
+                              ? "bg-[#10CB0026] text-[#0DA000]"
+                              : transaction?.status === "Pending"
                                 ? "bg-[#FFC70126] text-[#FFB800]"
                                 : transaction?.status === "Manual Verified"
-                                ? "bg-[#0865e851] text-[#0864E8]"
-                                : "bg-[#FF7A8F33] text-[#FF002A]"
-                            }`}
+                                  ? "bg-[#0865e851] text-[#0864E8]"
+                                  : "bg-[#FF7A8F33] text-[#FF002A]"
+                              }`}
                           >
                             {transaction?.status?.charAt(0).toUpperCase() +
                               transaction?.status?.slice(1)}
@@ -1089,15 +1103,14 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                           <FaIndianRupeeSign className="mt-[2px]" />
                         ) : null
                       }
-                      className={`w-[50%] text-[12px] input-placeholder-black ${
-                        isEdit &&
+                      className={`w-[50%] text-[12px] input-placeholder-black ${isEdit &&
                         (field.label === "Amount:" || field?.label === "UTR#:")
-                          ? "bg-white"
-                          : "bg-gray-200"
-                      }`}
+                        ? "bg-white"
+                        : "bg-gray-200"
+                        }`}
                       readOnly={
                         isEdit &&
-                        (field.label === "Amount:" || field?.label === "UTR#:")
+                          (field.label === "Amount:" || field?.label === "UTR#:")
                           ? false
                           : true
                       }
@@ -1119,7 +1132,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                   )}
                 </div>
               ))}
-              {selectedTransaction?.status === "Pending" && (
+              {selectedTransaction?.status === "Pending" && editPermission && (
                 <div className="flex gap-2 mt-4">
                   <button
                     className="bg-[#03996933] flex text-[#039969] p-2 rounded hover:bg-[#03996950] text-[13px]"
@@ -1138,11 +1151,10 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                     Approve Transaction
                   </button>
                   <button
-                    className={`flex p-2 rounded text-[13px] ${
-                      declineButtonClicked
-                        ? "bg-[#140e0f33] text-black"
-                        : "bg-[#FF405F33] hover:bg-[#FF405F50] text-[#FF3F5F]"
-                    }`}
+                    className={`flex p-2 rounded text-[13px] ${declineButtonClicked
+                      ? "bg-[#140e0f33] text-black"
+                      : "bg-[#FF405F33] hover:bg-[#FF405F50] text-[#FF3F5F]"
+                      }`}
                     onClick={() =>
                       setDeclinedButtonClicked(!declineButtonClicked)
                     }
@@ -1160,67 +1172,6 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
               {/* Bottom Divider and Activity */}
               <div className="border-b w-[370px] mt-4"></div>
 
-              {(declineButtonClicked || newStatus === "Decline") && (
-                <>
-                  <p className="text-[14px] font-[700] mt-4">
-                    Select Reason for Decline
-                  </p>
-                  <div className="space-y-2 mt-2">
-                    {options.map((option) => (
-                      <label
-                        key={option}
-                        className="flex items-center space-x-3 cursor-pointer rounded-lg"
-                      >
-                        <input
-                          type="radio"
-                          name="issue"
-                          value={option}
-                          checked={selectedOption === option}
-                          onChange={() => setSelectedOption(option)}
-                          className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
-                        />
-                        <span className="text-gray-700 dark:text-gray-300">
-                          {option}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                  <div className="flex gap-[10px] mt-4">
-                    <button
-                      className="bg-[#FF405F33] flex text-[#FF3F5F] py-2 px-[20px] rounded hover:bg-[#FF405F50] text-[13px] w-[max-content]"
-                      onClick={() => {
-                        if (!selectedOption) {
-                          notification.error({
-                            message: "Error",
-                            description: "Please select a reason for decline",
-                            placement: "topRight",
-                          });
-                          return;
-                        }
-                        handleTransactionAction(
-                          "Decline",
-                          selectedTransaction?._id
-                        );
-                        setNewStatus(null);
-                        setDeclinedButtonClicked(false);
-                        setSelectedOption(null);
-                      }}
-                    >
-                      Submit
-                    </button>
-                    <button
-                      className="bg-gray-200 flex text-black py-2 px-[20px] rounded text-[13px] w-[max-content]"
-                      onClick={() => {
-                        setNewStatus(null);
-                        setDeclinedButtonClicked(false);
-                        setSelectedOption(null);
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </>
-              )}
 
               {selectedTransaction?.trnStatus !== "Transaction Pending" && (
                 <div>
@@ -1229,116 +1180,116 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                       Transaction Activity:
                     </p>
                   </div>
-                      {/* Update transaction status for admin */}
-              {selectedTransaction?.status !== "Pending" && Cookies.get("type") === "admin" && (
-                <div className="flex flex-col mt-3">
-                  <div className="flex items-center gap-3">
-                    <p className="text-[14px] font-[700] text-nowrap">
-                      Update Status:
-                    </p>
-                    <Select
-                      key={selectedTransaction?._id}
-                      style={{ width: 200 }}
-                      placeholder="Select new status"
-                      value={newStatus}
-                      onChange={(value) => {
-                        setNewStatus(value);
-                        if (value === "Decline") {
-                          setDeclinedButtonClicked(true);
-                        } else {
-                          setDeclinedButtonClicked(false);
-                          setSelectedOption(null);
-                        }
-                      }}
-                    >
-                      {selectedTransaction?.status === "Approved" ? (
-                        <Select.Option value="Decline">
-                          Decline
-                        </Select.Option>
-                      ) : selectedTransaction?.status === "Decline" ? (
-                        <Select.Option value="Approved">
-                          Approve
-                        </Select.Option>
-                      ) : null}
-                    </Select>
-                  </div>
-                  {newStatus && newStatus !== "Decline" && (
-                    <button
-                      className="bg-[#03996933] flex text-[#039969] p-1.5 rounded hover:bg-[#03996950] text-[13px] mt-3 w-fit"
-                      onClick={() => {
-                        handleTransactionAction(
-                          newStatus,
-                          selectedTransaction?._id
-                        );
-                        setNewStatus(null);
-                      }}
-                    >
-                      Update Status
-                    </button>
-                  )}
-                  {newStatus === "Decline" && (
-                    <>
-                      <p className="text-[14px] font-[700] mt-4">
-                        Select Reason for Decline
-                      </p>
-                      <div className="space-y-2 mt-2">
-                        {options.map((option) => (
-                          <label
-                            key={option}
-                            className="flex items-center space-x-3 cursor-pointer rounded-lg"
-                          >
-                            <input
-                              type="radio"
-                              name="issue"
-                              value={option}
-                              checked={selectedOption === option}
-                              onChange={() => setSelectedOption(option)}
-                              className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
-                            />
-                            <span className="text-gray-700 dark:text-gray-300">
-                              {option}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                      <div className="flex gap-[10px] mt-4">
-                        <button
-                          className="bg-[#FF405F33] flex text-[#FF3F5F] py-2 px-[20px] rounded hover:bg-[#FF405F50] text-[13px] w-[max-content]"
-                          onClick={() => {
-                            if (!selectedOption) {
-                              notification.error({
-                                message: "Error",
-                                description: "Please select a reason for decline",
-                                placement: "topRight",
-                              });
-                              return;
+                  {/* Update transaction status for admin */}
+                  {selectedTransaction?.status !== "Pending" && Cookies.get("type") === "admin" && (
+                    <div className="flex flex-col mt-3">
+                      <div className="flex items-center gap-3">
+                        <p className="text-[14px] font-[700] text-nowrap">
+                          Update Status:
+                        </p>
+                        <Select
+                          key={selectedTransaction?._id}
+                          style={{ width: 200 }}
+                          placeholder="Select new status"
+                          value={newStatus}
+                          onChange={(value) => {
+                            setNewStatus(value);
+                            if (value === "Decline") {
+                              setDeclinedButtonClicked(true);
+                            } else {
+                              setDeclinedButtonClicked(false);
+                              setSelectedOption(null);
                             }
+                          }}
+                        >
+                          {selectedTransaction?.status === "Approved" ? (
+                            <Select.Option value="Decline">
+                              Decline
+                            </Select.Option>
+                          ) : selectedTransaction?.status === "Decline" ? (
+                            <Select.Option value="Approved">
+                              Approve
+                            </Select.Option>
+                          ) : null}
+                        </Select>
+                      </div>
+                      {newStatus && newStatus !== "Decline" && (
+                        <button
+                          className="bg-[#03996933] flex text-[#039969] p-1.5 rounded hover:bg-[#03996950] text-[13px] mt-3 w-fit"
+                          onClick={() => {
                             handleTransactionAction(
-                              "Decline",
+                              newStatus,
                               selectedTransaction?._id
                             );
                             setNewStatus(null);
-                            setDeclinedButtonClicked(false);
-                            setSelectedOption(null);
                           }}
                         >
-                          Submit
+                          Update Status
                         </button>
-                        <button
-                          className="bg-gray-200 flex text-black py-2 px-[20px] rounded text-[13px] w-[max-content]"
-                          onClick={() => {
-                            setNewStatus(null);
-                            setDeclinedButtonClicked(false);
-                            setSelectedOption(null);
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </>
+                      )}
+                      {newStatus === "Decline" && (
+                        <>
+                          <p className="text-[14px] font-[700] mt-4">
+                            Select Reason for Decline
+                          </p>
+                          <div className="space-y-2 mt-2">
+                            {options.map((option) => (
+                              <label
+                                key={option}
+                                className="flex items-center space-x-3 cursor-pointer rounded-lg"
+                              >
+                                <input
+                                  type="radio"
+                                  name="issue"
+                                  value={option}
+                                  checked={selectedOption === option}
+                                  onChange={() => setSelectedOption(option)}
+                                  className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
+                                />
+                                <span className="text-gray-700 dark:text-gray-300">
+                                  {option}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                          <div className="flex gap-[10px] mt-4">
+                            <button
+                              className="bg-[#FF405F33] flex text-[#FF3F5F] py-2 px-[20px] rounded hover:bg-[#FF405F50] text-[13px] w-[max-content]"
+                              onClick={() => {
+                                if (!selectedOption) {
+                                  notification.error({
+                                    message: "Error",
+                                    description: "Please select a reason for decline",
+                                    placement: "topRight",
+                                  });
+                                  return;
+                                }
+                                handleTransactionAction(
+                                  "Decline",
+                                  selectedTransaction?._id
+                                );
+                                setNewStatus(null);
+                                setDeclinedButtonClicked(false);
+                                setSelectedOption(null);
+                              }}
+                            >
+                              Submit
+                            </button>
+                            <button
+                              className="bg-gray-200 flex text-black py-2 px-[20px] rounded text-[13px] w-[max-content]"
+                              onClick={() => {
+                                setNewStatus(null);
+                                setDeclinedButtonClicked(false);
+                                setSelectedOption(null);
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
-                </div>
-              )}
                   <div className="mt-4">
                     <table className="w-[77%] border-collapse">
                       <thead>
@@ -1366,19 +1317,18 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                                 .format("DD MMM YYYY, hh:mm A")}
                             </td>
                             <td className="p-2 text-[12px] border">
-                              {log?.adminStaffId?.userName || "Admin"}
+                              {log?.actionBy || "Admin"}
                             </td>
                             <td className="p-2 text-[12px] border">
                               <span
-                                className={`px-2 py-1 rounded-[20px] text-nowrap text-[11px] font-[600] ${
-                                  log?.status === "Approved"
-                                    ? "bg-[#10CB0026] text-[#0DA000]"
-                                    : log?.status === "Pending"
+                                className={`px-2 py-1 rounded-[20px] text-nowrap text-[11px] font-[600] ${log?.status === "Approved"
+                                  ? "bg-[#10CB0026] text-[#0DA000]"
+                                  : log?.status === "Pending"
                                     ? "bg-[#FFC70126] text-[#FFB800]"
                                     : log?.status === "Manual Verified"
-                                    ? "bg-[#0865e851] text-[#0864E8]"
-                                    : "bg-[#FF7A8F33] text-[#FF002A]"
-                                }`}
+                                      ? "bg-[#0865e851] text-[#0864E8]"
+                                      : "bg-[#FF7A8F33] text-[#FF002A]"
+                                  }`}
                               >
                                 {log?.status}
                               </span>
@@ -1394,7 +1344,7 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                 </div>
               )}
 
-          
+
             </div>
             {/* Right side with border and image */}
             <div

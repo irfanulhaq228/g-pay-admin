@@ -64,8 +64,24 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
     const [declineButtonClicked, setDeclinedButtonClicked] = useState(false);
 
     
+    const [editPermission, setEditPermission] = useState(true);
+
+    const fn_getStaffDetials = async () => {
+        try {
+            const res = await axios.get(`${BACKEND_URL}/adminStaff/get/${Cookies.get("adminId")}`);
+            if (res?.status === 200) {
+                setEditPermission(res?.data?.data?.editPermission)
+            }
+        } catch (error) {
+            console.error("Error fetching staff details:", error);
+        }
+    }
+
     useEffect(() => {
         fetchPortal();
+        if (Cookies.get("type") === "staff") {
+            fn_getStaffDetials();
+        }
     }, []);
 
     useEffect(() => {
@@ -342,19 +358,19 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
             }
 
             const token = Cookies.get("token");
-            const userId = Cookies.get('userId');
+            const userId = Cookies.get('adminId');
             const type = Cookies.get('type');
             const formData = new FormData();
             formData.append("status", action);
             formData.append("utr", utr);
-            
+
             // Only append adminStaffId if type is staff and userId exists
             if (type === 'staff' && userId) {
                 formData.append("adminStaffId", userId);
             }
-            
+
             if (image) formData.append("image", image);
-            
+
             const response = await axios.put(`${BACKEND_URL}/withdraw/update/${id}`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -461,9 +477,11 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                 </p>
                             </div>
                             {/* Add back the withdraw button */}
-                            <Button type="primary" onClick={handleWithdrawRequest}>
-                                Create Withdraw
-                            </Button>
+                            {Cookies.get("type") === "admin" && (
+                                <Button type="primary" onClick={handleWithdrawRequest}>
+                                    Create Withdraw
+                                </Button>
+                            )}
                         </div>
                         <div className="w-full border-t-[1px] border-[#DDDDDD80] hidden sm:block mb-4"></div>
                         <div className="overflow-x-auto">
@@ -643,48 +661,48 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                 )}
 
                                 {/* AED and By Cash Details */}
-                                {(selectedTransaction?.exchangeId?._id === "67c1cafffd672c91b4a768cb" || 
-                                  selectedTransaction?.exchangeId?._id === "67c1cb2ffd672c91b4a769b2") && (
-                                    <>
-                                        <div className="border-t mt-2 mb-1"></div>
-                                        <p className="font-[600] text-[14px] mb-2">Cash Withdrawal Details</p>
+                                {(selectedTransaction?.exchangeId?._id === "67c1cafffd672c91b4a768cb" ||
+                                    selectedTransaction?.exchangeId?._id === "67c1cb2ffd672c91b4a769b2") && (
+                                        <>
+                                            <div className="border-t mt-2 mb-1"></div>
+                                            <p className="font-[600] text-[14px] mb-2">Cash Withdrawal Details</p>
 
-                                        <div className="flex items-center gap-4">
-                                            <p className="text-[12px] font-[600] w-[200px]">Location:</p>
-                                            <Input
-                                                className="text-[12px] bg-gray-200"
-                                                readOnly
-                                                value={selectedTransaction?.locationId?.location || 'N/A'}
-                                            />
-                                        </div>
+                                            <div className="flex items-center gap-4">
+                                                <p className="text-[12px] font-[600] w-[200px]">Location:</p>
+                                                <Input
+                                                    className="text-[12px] bg-gray-200"
+                                                    readOnly
+                                                    value={selectedTransaction?.locationId?.location || 'N/A'}
+                                                />
+                                            </div>
 
-                                        <div className="flex items-center gap-4">
-                                            <p className="text-[12px] font-[600] w-[200px]">Name:</p>
-                                            <Input
-                                                className="text-[12px] bg-gray-200"
-                                                readOnly
-                                                value={selectedTransaction?.customerName || 'N/A'}
-                                            />
-                                        </div>
+                                            <div className="flex items-center gap-4">
+                                                <p className="text-[12px] font-[600] w-[200px]">Name:</p>
+                                                <Input
+                                                    className="text-[12px] bg-gray-200"
+                                                    readOnly
+                                                    value={selectedTransaction?.customerName || 'N/A'}
+                                                />
+                                            </div>
 
-                                        <div className="flex items-center gap-4">
-                                            <p className="text-[12px] font-[600] w-[200px]">Contact Number:</p>
-                                            <Input
-                                                className="text-[12px] bg-gray-200"
-                                                readOnly
-                                                value={selectedTransaction?.contactNumber || 'N/A'}
-                                            />
-                                        </div>
+                                            <div className="flex items-center gap-4">
+                                                <p className="text-[12px] font-[600] w-[200px]">Contact Number:</p>
+                                                <Input
+                                                    className="text-[12px] bg-gray-200"
+                                                    readOnly
+                                                    value={selectedTransaction?.contactNumber || 'N/A'}
+                                                />
+                                            </div>
 
-                                        <div className="flex items-center gap-4">
-                                            <p className="text-[12px] font-[600] w-[200px]">Token:</p>
-                                            <div 
-                                                className="text-[12px] bg-gray-200 p-2 rounded w-full"
-                                                dangerouslySetInnerHTML={{ __html: selectedTransaction?.token || 'N/A' }}
-                                            />
-                                        </div>
-                                    </>
-                                )}
+                                            <div className="flex items-center gap-4">
+                                                <p className="text-[12px] font-[600] w-[200px]">Token:</p>
+                                                <div
+                                                    className="text-[12px] bg-gray-200 p-2 rounded w-full"
+                                                    dangerouslySetInnerHTML={{ __html: selectedTransaction?.token || 'N/A' }}
+                                                />
+                                            </div>
+                                        </>
+                                    )}
 
                                 {/* Portal Details */}
                                 {selectedTransaction?.exchangeId?._id === "67c20f130213c2d397da36c9" && (
@@ -773,7 +791,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                         </div>
                                     </>
                                 )}
-                                {selectedTransaction?.status === "Pending" && (
+                                {selectedTransaction?.status === "Pending" && editPermission && (
                                     <div className="flex gap-4 mt-2">
                                         <button
                                             className="flex-1 bg-[#03996933] flex items-center justify-center text-[#039969] p-2 rounded hover:bg-[#03996950] text-[13px]"
@@ -887,19 +905,18 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                                                     .format("DD MMM YYYY, hh:mm A")}
                                                             </td>
                                                             <td className="p-2 text-[12px] border">
-                                                                {log?.adminStaffId?.userName || "Admin"}
+                                                                {log?.actionBy || "Admin"}
                                                             </td>
                                                             <td className="p-2 text-[12px] border">
                                                                 <span
-                                                                    className={`px-2 py-1 rounded-[20px] text-nowrap text-[11px] font-[600] ${
-                                                                        log?.status === "Approved"
-                                                                            ? "bg-[#10CB0026] text-[#0DA000]"
-                                                                            : log?.status === "Pending"
+                                                                    className={`px-2 py-1 rounded-[20px] text-nowrap text-[11px] font-[600] ${log?.status === "Approved"
+                                                                        ? "bg-[#10CB0026] text-[#0DA000]"
+                                                                        : log?.status === "Pending"
                                                                             ? "bg-[#FFC70126] text-[#FFB800]"
                                                                             : log?.status === "Manual Verified"
-                                                                            ? "bg-[#0865e851] text-[#0864E8]"
-                                                                            : "bg-[#FF7A8F33] text-[#FF002A]"
-                                                                    }`}
+                                                                                ? "bg-[#0865e851] text-[#0864E8]"
+                                                                                : "bg-[#FF7A8F33] text-[#FF002A]"
+                                                                        }`}
                                                                 >
                                                                     {log?.status}
                                                                 </span>
@@ -911,7 +928,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                         </div>
                                     </>
                                 )}
-                                    
+
                             </div>
                         </div>
 
