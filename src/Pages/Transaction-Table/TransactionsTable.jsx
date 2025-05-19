@@ -710,10 +710,12 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
               </div>
             )}
             <div className="flex gap-[15px]">
-              <Button type="primary" onClick={() => setExchangeRateModal(true)}>
-                <BsCurrencyExchange />
-                USDT Exchange Rate
-              </Button>
+              {Cookies.get("type") === "admin" && (
+                <Button type="primary" onClick={() => setExchangeRateModal(true)}>
+                  <BsCurrencyExchange />
+                  USDT Exchange Rate
+                </Button>
+              )}
               <Button
                 type="primary"
                 onClick={async () => {
