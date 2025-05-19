@@ -7,7 +7,6 @@ import { FiTrash2 } from "react-icons/fi";
 import { FaExclamationCircle } from "react-icons/fa";
 
 import BACKEND_URL, { fn_getAllBanksData, fn_getMerchantApi } from "../../api/api";
-import { CiEdit } from "react-icons/ci";
 import { RiEditLine } from "react-icons/ri";
 
 const Staff = ({ showSidebar }) => {
@@ -24,11 +23,11 @@ const Staff = ({ showSidebar }) => {
     const transactionTypeOptions = [{ label: "Manual Transaction", value: "manual" }, { label: "Direct Payment", value: "direct" }];
 
     const [staffForm, setStaffForm] = useState({
-        userName: "", email: "", password: "", ledgerType: [], ledgerBank: [], ledgerMerchant: [], type: []
+        userName: "", email: "", password: "", permissionType: "", ledgerType: [], type: []
     });
 
     const [editForm, setEditForm] = useState({
-        userName: "", email: "", password: "", ledgerType: [], ledgerBank: [], ledgerMerchant: [], id: ""
+        userName: "", email: "", password: "", id: "", editPermission: false, ledgerType: [], ledgerMerchant: [], ledgerBank: []
     });
 
     useEffect(() => {
@@ -201,6 +200,7 @@ const Staff = ({ showSidebar }) => {
             userName: staff?.userName,
             email: staff?.email,
             password: staff?.password,
+            editPermission: staff?.editPermission,
             // ledgerType: staff?.ledgerType,
             // ledgerBank: staff?.ledgerBank,
             // ledgerMerchant: staff?.ledgerMerchant,
@@ -344,7 +344,7 @@ const Staff = ({ showSidebar }) => {
                 </div>
             </div>
 
-             {/* Add Staf Model  */}
+            {/* Add Staf Model  */}
             <Modal
                 title={<p className="text-[20px] font-[600]">Add New Staff</p>}
                 open={open}
@@ -453,12 +453,17 @@ const Staff = ({ showSidebar }) => {
                             Edit Permission <span className="text-red-500">*</span>
                         </p>
                         <Radio.Group
-                            onChange={(e) => setEditForm({ ...editForm, editPermission: e.target.value })}
-                            value={editForm.editPermission}
+                            onChange={(e) =>
+                                setEditForm({
+                                    ...editForm,
+                                    editPermission: e.target.value, // Convert string back to boolean
+                                })
+                            }
+                            value={editForm.editPermission} // Convert current boolean to string for Radio value
                             style={{ marginBottom: 16 }}
                         >
-                            <Radio value={true}>Yes</Radio>
-                            <Radio value={false}>No</Radio>
+                            <Radio value={true} checked={editForm.editPermission}>Yes</Radio>
+                            <Radio value={false} checked={!editForm.editPermission}>No</Radio>
                         </Radio.Group>
                     </div>
 
