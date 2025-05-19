@@ -59,7 +59,11 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
     const [merchantWallet, setMerchantWallet] = useState(null);
     const [selectedMerchant, setSelectedMerchant] = useState(null);
     const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
+    const [newStatus, setNewStatus] = useState(null);
+    const [selectedOption, setSelectedOption] = useState(null);
+    const [declineButtonClicked, setDeclinedButtonClicked] = useState(false);
 
+    
     useEffect(() => {
         fetchPortal();
     }, []);
@@ -787,6 +791,55 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                             <GoCircleSlash className="mt-[3px] mr-[6px]" />
                                             Decline
                                         </button>
+                                    </div>
+                                )}
+                                {/* Update Status Section */}
+                                {selectedTransaction?.status !== "Pending" && Cookies.get("type") === "admin" && (
+                                    <div>
+                                        <div className="border-t mt-4 mb-2"></div>
+                                        <div className="flex flex-col mt-3">
+                                            <div className="flex items-center gap-3">
+                                                <p className="text-[14px] font-[700] text-nowrap">
+                                                    Update Status:
+                                                </p>
+                                                <Select
+                                                    key={selectedTransaction?._id}
+                                                    style={{ width: 200 }}
+                                                    placeholder="Select new status"
+                                                    value={newStatus}
+                                                    onChange={(value) => {
+                                                        setNewStatus(value);
+                                                    }}
+                                                >
+                                                    {selectedTransaction?.status === "Approved" ? (
+                                                        <Select.Option value="Decline">
+                                                            Decline
+                                                        </Select.Option>
+                                                    ) : selectedTransaction?.status === "Decline" ? (
+                                                        <Select.Option value="Approved">
+                                                            Approve
+                                                        </Select.Option>
+                                                    ) : null}
+                                                </Select>
+                                            </div>
+                                            {newStatus && (
+                                                <div className="mt-3">
+                                                    <button
+                                                        className="bg-[#03996933] text-[#039969] hover:bg-[#03996950] flex items-center p-2 rounded text-[13px]"
+                                                        onClick={() => {
+                                                            handleTransactionAction(
+                                                                newStatus,
+                                                                selectedTransaction?._id
+                                                            );
+                                                            setNewStatus(null);
+                                                        }}
+                                                    >
+                                                        <IoMdCheckmark className="mt-[3px] mr-[6px]" />
+                                                        Update Status
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                                 {/* Show status at bottom if approved without UTR or declined */}
