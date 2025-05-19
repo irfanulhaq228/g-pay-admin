@@ -68,10 +68,11 @@ const Login = ({ authorization, setAuthorization }) => {
         // }
         // setAuthorization(true);
       } else {
+        setLoginLoader(false);
         notification.error({
           message: "Login Failed",
           description:
-            response?.message || "Invalid credentials. Please try again.",
+            response?.message ,
           placement: "topRight",
         });
       };
@@ -138,7 +139,7 @@ const Login = ({ authorization, setAuthorization }) => {
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
+    return `${minutes}:${secs < 60 ? "0" : ""}${secs}`;
   };
 
   const fn_closeOtpModal = () => {
@@ -169,13 +170,14 @@ const Login = ({ authorization, setAuthorization }) => {
           navigate("/withdraw");
         }
       }
+      
       setAuthorization(true);
     } else {
       setVerifyLoader(false);
       notification.error({
         message: "Login Failed",
         description:
-          response?.data?.message || "Invalid credentials. Please try again.",
+          response?.message,
         placement: "topRight",
       });
     }
