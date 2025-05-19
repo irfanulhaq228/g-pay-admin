@@ -1,6 +1,6 @@
 import axios from "axios";
 import Cookies from "js-cookie";
-import moment from "moment/moment";
+import moment from "moment-timezone";
 import ReactQuill from "react-quill";
 import PhoneInput from 'react-phone-input-2';
 import TextArea from "antd/es/input/TextArea";
@@ -806,10 +806,10 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                     )}
 
                                 {/* Transaction Logs Table */}
-                                {selectedTransaction?.transactionLogs?.length > 0 && (
+                                {selectedTransaction?.withdrawLogs?.length > 0 && (
                                     <>
                                         <div className="border-t mt-4 mb-2"></div>
-                                        <p className="text-[14px] font-[600] mb-2">Transaction Logs</p>
+                                        <p className="text-[14px] font-[600] mb-2">Withdraw Logs</p>
                                         <div className="overflow-x-auto">
                                             <table className="w-full border-collapse">
                                                 <thead>
@@ -823,16 +823,13 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                                         <th className="p-2 text-center text-[12px] font-[600] border">
                                                             Status
                                                         </th>
-                                                        <th className="p-2 text-[12px] font-[600] border text-center">
-                                                            Reason
-                                                        </th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {selectedTransaction?.transactionLogs?.map((log, index) => (
+                                                    {selectedTransaction?.withdrawLogs?.map((log, index) => (
                                                         <tr key={index}>
                                                             <td className="p-2 text-[12px] border text-nowrap">
-                                                                {moment(log?.updatedAt)
+                                                                {moment(log?.date)
                                                                     .tz("Asia/Kolkata")
                                                                     .format("DD MMM YYYY, hh:mm A")}
                                                             </td>
@@ -853,9 +850,6 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                                                 >
                                                                     {log?.status}
                                                                 </span>
-                                                            </td>
-                                                            <td className="p-2 text-[12px] border text-nowrap text-center">
-                                                                {log?.reason || "-"}
                                                             </td>
                                                         </tr>
                                                     ))}
