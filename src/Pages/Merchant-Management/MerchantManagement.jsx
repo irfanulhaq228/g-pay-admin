@@ -414,19 +414,6 @@ const MerchantManagement = ({ authorization, showSidebar, setAuthorization }) =>
 
                   <div className="my-2">
                     <p>
-                      Image <span className="text-[#D50000]">*</span>
-                    </p>
-                    <Input
-                      type="file"
-                      onChange={(e) => setImage(e.target.files[0])}
-                    />
-                    {errors.image && (
-                      <p className="text-red-500">{errors.image}</p>
-                    )}
-                  </div>
-
-                  <div className="my-2">
-                    <p>
                       Admin Commission (%) <span className="text-[#D50000]">*</span>
                     </p>
                     <Input
