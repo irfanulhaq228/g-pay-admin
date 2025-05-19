@@ -729,7 +729,6 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                         value={selectedTransaction?.note || 'N/A'} F
                                     />
                                 </div>
-
                                 {/* Action Buttons */}
                                 {selectedTransaction?.status === "Pending" && selectedTransaction?.withdrawBankId && (
                                     <>
@@ -805,8 +804,71 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                             </div>
                                         </>
                                     )}
+
+                                {/* Transaction Logs Table */}
+                                {selectedTransaction?.transactionLogs?.length > 0 && (
+                                    <>
+                                        <div className="border-t mt-4 mb-2"></div>
+                                        <p className="text-[14px] font-[600] mb-2">Transaction Logs</p>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full border-collapse">
+                                                <thead>
+                                                    <tr className="bg-gray-100">
+                                                        <th className="p-2 text-center text-[12px] font-[600] border">
+                                                            Date
+                                                        </th>
+                                                        <th className="p-2 text-center text-[12px] font-[600] border text-nowrap">
+                                                            Action By
+                                                        </th>
+                                                        <th className="p-2 text-center text-[12px] font-[600] border">
+                                                            Status
+                                                        </th>
+                                                        <th className="p-2 text-[12px] font-[600] border text-center">
+                                                            Reason
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {selectedTransaction?.transactionLogs?.map((log, index) => (
+                                                        <tr key={index}>
+                                                            <td className="p-2 text-[12px] border text-nowrap">
+                                                                {moment(log?.updatedAt)
+                                                                    .tz("Asia/Kolkata")
+                                                                    .format("DD MMM YYYY, hh:mm A")}
+                                                            </td>
+                                                            <td className="p-2 text-[12px] border">
+                                                                {log?.adminStaffId?.userName || "Admin"}
+                                                            </td>
+                                                            <td className="p-2 text-[12px] border">
+                                                                <span
+                                                                    className={`px-2 py-1 rounded-[20px] text-nowrap text-[11px] font-[600] ${
+                                                                        log?.status === "Approved"
+                                                                            ? "bg-[#10CB0026] text-[#0DA000]"
+                                                                            : log?.status === "Pending"
+                                                                            ? "bg-[#FFC70126] text-[#FFB800]"
+                                                                            : log?.status === "Manual Verified"
+                                                                            ? "bg-[#0865e851] text-[#0864E8]"
+                                                                            : "bg-[#FF7A8F33] text-[#FF002A]"
+                                                                    }`}
+                                                                >
+                                                                    {log?.status}
+                                                                </span>
+                                                            </td>
+                                                            <td className="p-2 text-[12px] border text-nowrap text-center">
+                                                                {log?.reason || "-"}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </>
+                                )}
+                                    
                             </div>
                         </div>
+
+
 
                         {/* Right Column - Only show for Approved with UTR */}
                         {selectedTransaction.status !== "Pending" &&

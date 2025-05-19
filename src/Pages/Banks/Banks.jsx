@@ -695,8 +695,8 @@ const BankManagement = ({ authorization, showSidebar }) => {
                                       : "inherit",
                                 }}
                               >
-                                {account.accountType === "crypto" ? "$" : "₹"} {account.accountLimit} / {" "}
-                                {account.accountType === "crypto" ? "$" : "₹"} {account.remainingLimit}
+                                {account.accountType === "crypto" ? "₹" : "₹"} {account.accountLimit} / {" "}
+                                {account.accountType === "crypto" ? "₹" : "₹"} {account.remainingLimit}
                               </div>
                             </td>
 
@@ -1109,26 +1109,11 @@ const BankManagement = ({ authorization, showSidebar }) => {
             </div>
             <div className="flex gap-4">
               {/* Account Limit */}
-              {/* <div className="flex-1 my-2">
-                <p className="text-[12px] font-[500] pb-1">
-                  Account Limit <span className="text-[#D50000]">*</span>
-                </p>
-
-                <Input
-                  value={data?.accountLimit}
-                  onChange={(e) =>
-                    setData((prev) => ({ ...prev, accountLimit: e.target.value }))
-                  }
-                  className="w-full text-[12px]"
-                  placeholder="Account Limit"
-                />
-              </div> */}
-
               <div className="flex-1 my-2">
                 <p className="text-[12px] font-[500] pb-1">
                   Account Limit <span className="text-[#D50000]">*</span>
                   {activeTab === "crypto" && (
-                    <span className="ml-2 text-gray-500">($)</span>
+                    <span className="ml-2 text-gray-500">(₹)</span>
                   )}
                 </p>
                 <div className="relative">
@@ -1142,7 +1127,7 @@ const BankManagement = ({ authorization, showSidebar }) => {
                   />
                   {activeTab === "crypto" && (
                     <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500">
-                      $
+                      ₹
                     </span>
                   )}
                 </div>
