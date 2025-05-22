@@ -14,7 +14,7 @@ const { Text, Title } = Typography;
 
 const Login = ({ authorization, setAuthorization }) => {
 
-  const resendTimer = 10;
+  const resendTimer = 60;
   const timerRef = useRef(null);
   const navigate = useNavigate();
   const screens = useBreakpoint();
@@ -139,7 +139,7 @@ const Login = ({ authorization, setAuthorization }) => {
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${minutes}:${secs < 60 ? "0" : ""}${secs}`;
+    return `${minutes}:${secs < 60 ? "" : ""}${secs}`;
   };
 
   const fn_closeOtpModal = () => {

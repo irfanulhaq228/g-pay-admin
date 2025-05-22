@@ -1,3 +1,4 @@
+import axios from "axios";
 import jsPDF from "jspdf";
 import Cookies from "js-cookie";
 import moment from "moment-timezone";
@@ -9,27 +10,9 @@ import { GoCircleSlash } from "react-icons/go";
 import React, { useState, useEffect } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaDollarSign, FaIndianRupeeSign } from "react-icons/fa6";
-import {
-  Pagination,
-  Modal,
-  Input,
-  notification,
-  DatePicker,
-  Space,
-  Select,
-  Button,
-} from "antd";
-import BACKEND_URL, {
-  fn_getAdminsTransactionApi,
-  fn_getAllTransactionApi,
-  fn_updateTransactionStatusApi,
-  fn_getMerchantApi,
-  fn_getOverAllBanksData,
-  fn_setExchangeRate,
-  fn_getExchangeRateApi,
-} from "../../api/api";
+import { Pagination, Modal, Input, notification, DatePicker, Space, Select, Button } from "antd";
+import BACKEND_URL, { fn_getAdminsTransactionApi, fn_getAllTransactionApi, fn_updateTransactionStatusApi, fn_getMerchantApi, fn_getOverAllBanksData, fn_setExchangeRate, fn_getExchangeRateApi } from "../../api/api";
 import { BsCurrencyExchange } from "react-icons/bs";
-import axios from "axios";
 
 const TransactionsTable = ({ authorization, showSidebar }) => {
   const searchParams = new URLSearchParams(location.search);
@@ -367,6 +350,11 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
     } else {
       setIsEdit(false);
       console.error(`Failed to ${action} transaction:`, response.message);
+      notification.error({
+        message: "Error",
+        description: response?.message || "Network Error",
+        placement: "topRight",
+      })
     }
   };
 
@@ -1132,6 +1120,67 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                   )}
                 </div>
               ))}
+              {declineButtonClicked && selectedTransaction?.status === "Pending" && (
+                <>
+                  <p className="text-[14px] font-[700] mt-4">
+                    Select Reason for Decline
+                  </p>
+                  <div className="space-y-2 mt-2">
+                    {options.map((option) => (
+                      <label
+                        key={option}
+                        className="flex items-center space-x-3 cursor-pointer rounded-lg"
+                      >
+                        <input
+                          type="radio"
+                          name="issue"
+                          value={option}
+                          checked={selectedOption === option}
+                          onChange={() => setSelectedOption(option)}
+                          className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
+                        />
+                        <span className="text-gray-700 dark:text-gray-300">
+                          {option}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="flex gap-[10px] mt-4">
+                    <button
+                      className="bg-[#FF405F33] flex text-[#FF3F5F] py-2 px-[20px] rounded hover:bg-[#FF405F50] text-[13px] w-[max-content]"
+                      onClick={() => {
+                        if (!selectedOption) {
+                          notification.error({
+                            message: "Error",
+                            description: "Please select a reason for decline",
+                            placement: "topRight",
+                          });
+                          return;
+                        }
+                        handleTransactionAction(
+                          "Decline",
+                          selectedTransaction?._id
+                        );
+                        setNewStatus(null);
+                        setDeclinedButtonClicked(false);
+                        setSelectedOption(null);
+                      }}
+                    >
+                      Submit
+                    </button>
+                    <button
+                      className="bg-gray-200 flex text-black py-2 px-[20px] rounded text-[13px] w-[max-content]"
+                      onClick={() => {
+                        setNewStatus(null);
+                        setDeclinedButtonClicked(false);
+                        setSelectedOption(null);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              )}
               {selectedTransaction?.status === "Pending" && editPermission && (
                 <div className="flex gap-2 mt-4">
                   <button
@@ -1157,6 +1206,10 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
                       }`}
                     onClick={() =>
                       setDeclinedButtonClicked(!declineButtonClicked)
+                      // handleTransactionAction(
+                      //   "Decline",
+                      //   selectedTransaction?._id
+                      // )
                     }
                     disabled={
                       selectedTransaction?.status === "Approved" ||
@@ -1388,6 +1441,9 @@ const TransactionsTable = ({ authorization, showSidebar }) => {
         >
           <Input addonBefore={<FaDollarSign />} value={1} />
           <Input
+            type="number"
+            step={0.01}
+            min={1}
             addonBefore={<FaIndianRupeeSign />}
             value={indianRate}
             onChange={(e) => setIndianRate(e.target.value)}

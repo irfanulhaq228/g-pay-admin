@@ -6,23 +6,14 @@ import React, { useState, useEffect } from "react";
 import { Switch, Button, Modal, Input, notification, Pagination } from "antd";
 
 import { FiEdit } from "react-icons/fi";
-import { FaExclamationCircle } from "react-icons/fa";
 import { MdDoNotDisturb } from "react-icons/md";
-import { FaTrash } from "react-icons/fa";
+import { FaExclamationCircle } from "react-icons/fa";
 import { MdOutlineCheckCircle } from "react-icons/md";
 
 import upilogo2 from "../../assets/upilogo2.svg";
 
 import { Banks } from "../../json-data/banks";
-import BACKEND_URL, {
-  fn_BankUpdate,
-  fn_getAllBanksData,
-  fn_DeleteBank,
-  fn_BankActivateApi,
-  fn_getAllBankLogs,
-  fn_createBankName,
-  fn_getAllBankNames,
-} from "../../api/api";
+import BACKEND_URL, { fn_BankUpdate, fn_getAllBanksData, fn_getAllBankLogs, fn_createBankName, fn_getAllBankNames } from "../../api/api";
 
 const capitalizeWords = (str) => {
   return str
@@ -33,35 +24,25 @@ const capitalizeWords = (str) => {
 };
 
 const BankManagement = ({ authorization, showSidebar }) => {
+
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [banksData, setBanksData] = useState([]);
-  const [state, setState] = useState({ bank: "" });
-  const containerHeight = window.innerHeight - 120;
-  const [activeTab, setActiveTab] = useState("bank");
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedBank, setSelectedBank] = useState(null);
-  const [editAccountId, setEditAccountId] = useState(null);
-  const [data, setData] = useState({
-    image: null,
-    bankName: "",
-    accountNo: "",
-    accountType: "",
-    iban: "",
-    accountLimit: "",
-    noOfTrans: "",
-    accountHolderName: "",
-    crypto: "",
-  });
   const [bankLogs, setBankLogs] = useState([]);
-  const [loadingLogs, setLoadingLogs] = useState(false);
-  const [addBankModalOpen, setAddBankModalOpen] = useState(false);
-  const [newBankName, setNewBankName] = useState("");
+  const [banksData, setBanksData] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [state, setState] = useState({ bank: "" });
   const [banksList, setBanksList] = useState(Banks);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const containerHeight = window.innerHeight - 120;
+  const [newBankName, setNewBankName] = useState("");
+  const [activeTab, setActiveTab] = useState("bank");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+  const [selectedBank, setSelectedBank] = useState(null);
+  const [editAccountId, setEditAccountId] = useState(null);
   const [searchBankTerm, setSearchBankTerm] = useState("");
+  const [addBankModalOpen, setAddBankModalOpen] = useState(false);
+  const [data, setData] = useState({ image: null, bankName: "", accountNo: "", accountType: "", iban: "", accountLimit: "", noOfTrans: "", accountHolderName: "", crypto: "", dailyLimit: "", remainingDailyLimit: "" });
 
   const fetchAllBanksData = async (tab) => {
     if (tab === "banklogs") {
@@ -78,7 +59,6 @@ const BankManagement = ({ authorization, showSidebar }) => {
         setLoadingLogs(false);
       }
     } else {
-      setLoading(true);
       try {
         const result = await fn_getAllBanksData(tab);
         if (result.status) {
@@ -89,7 +69,6 @@ const BankManagement = ({ authorization, showSidebar }) => {
         console.error("Error fetching data:", error);
         setBanksData([]);
       } finally {
-        setLoading(false);
       }
     }
   };
@@ -182,6 +161,8 @@ const BankManagement = ({ authorization, showSidebar }) => {
       noOfTrans: account.noOfTrans,
       accountHolderName: account.accountHolderName,
       crypto: account.crypto,
+      dailyLimit: account.dailyLimit,
+      remainingDailyLimit: account.remainingDailyLimit,
     });
     setEditAccountId(account._id);
     setIsEditMode(true);
@@ -199,7 +180,7 @@ const BankManagement = ({ authorization, showSidebar }) => {
         return;
       }
 
-      if (activeTab === "crypto" && !data?.crypto) {
+      if (activeTab === "crypto" && !data?.iban) {
         notification.error({
           message: "Error",
           description: "Crypto ID is required",
@@ -261,12 +242,22 @@ const BankManagement = ({ authorization, showSidebar }) => {
         });
         return;
       }
+      if (data?.dailyLimit === "" || Number(data?.dailyLimit) <= 0) {
+        notification.error({
+          message: "Error",
+          description: "Enter Daily Transaction Limit Correctly",
+          placement: "topRight",
+        });
+        return;
+      }
       const formData = new FormData();
       if (activeTab === "bank") {
         if (data?.image) {
           formData.append("image", data?.image);
         }
         formData.append("bankName", data?.bankName);
+        formData.append("dailyLimit", data?.dailyLimit);
+        formData.append("remainingDailyLimit", data?.dailyLimit);
         formData.append("accountNo", data?.accountNo);
         formData.append("accountType", activeTab);
         formData.append("iban", data?.iban);
@@ -277,11 +268,13 @@ const BankManagement = ({ authorization, showSidebar }) => {
       } else if (activeTab === "crypto") {
         formData.append("image", data?.image);
         formData.append("accountType", activeTab);
-        formData.append("iban", data?.crypto); // Changed from crypto to iban
+        formData.append("iban", data?.iban); // Changed from crypto to iban
         formData.append("accountLimit", data?.accountLimit);
         formData.append("noOfTrans", data?.noOfTrans);
         formData.append("accountHolderName", data?.accountHolderName);
         formData.append("block", true);
+        formData.append("dailyLimit", data?.dailyLimit);
+        formData.append("remainingDailyLimit", data?.dailyLimit);
       } else {
         if (!data?.image) return;
         formData.append("image", data?.image);
@@ -291,6 +284,8 @@ const BankManagement = ({ authorization, showSidebar }) => {
         formData.append("noOfTrans", data?.noOfTrans);
         formData.append("accountHolderName", data?.accountHolderName);
         formData.append("block", true);
+        formData.append("dailyLimit", data?.dailyLimit);
+        formData.append("remainingDailyLimit", data?.dailyLimit);
       }
       const token = Cookies.get("token");
       let response;
@@ -326,6 +321,7 @@ const BankManagement = ({ authorization, showSidebar }) => {
           accountNo: "",
           iban: "",
           accountLimit: "",
+          dailyLimit: "",
           noOfTrans: "",
           accountHolderName: "",
           crypto: "",
@@ -344,7 +340,6 @@ const BankManagement = ({ authorization, showSidebar }) => {
     }
   };
 
-  // Update handleAddNewBank to refresh the bank list after adding
   const handleAddNewBank = async () => {
     if (!newBankName.trim()) {
       notification.error({
@@ -538,6 +533,9 @@ const BankManagement = ({ authorization, showSidebar }) => {
                           ? "Transactions Limit"
                           : "Transactions Limit"}
                       </th>
+                      <th className="p-5 text-[13px] font-[600] text-nowrap">
+                        Daily Trn. Limit
+                      </th>
                       <th className="p-5 text-[13px] font-[600]">Status</th>
                       <th className="p-5 text-[13px] font-[600] pl-10">
                         {activeTab === "banklogs" ? "Reason" : "Action"}
@@ -595,6 +593,11 @@ const BankManagement = ({ authorization, showSidebar }) => {
                             <td className="p-2 text-[13px]">
                               <div className="ml-3">
                                 {log.bankId?.noOfTrans}
+                              </div>
+                            </td>
+                            <td className="p-2 text-[13px]">
+                              <div className="ml-3 text-nowrap">
+                                ₹ {log.bankId?.dailyLimit || 0}
                               </div>
                             </td>
                             <td className="text-center">
@@ -712,6 +715,20 @@ const BankManagement = ({ authorization, showSidebar }) => {
                               >
                                 {account.noOfTrans} /{" "}
                                 {account.remainingTransLimit}
+                              </div>
+                            </td>
+                            <td className="p-3 text-[13px] font-[400] text-nowrap">
+                              <div
+                                className="ml-1"
+                                style={{
+                                  color:
+                                    account.remainingDailyLimit === 0
+                                      ? "red"
+                                      : "inherit",
+                                }}
+                              >
+                                ₹ {account.dailyLimit} /{" "}
+                                ₹ {account.remainingDailyLimit}
                               </div>
                             </td>
                             <td className="text-center">
@@ -1070,6 +1087,25 @@ const BankManagement = ({ authorization, showSidebar }) => {
                 />
               </div>
             </div>
+            {/* daily limit */}
+            <div className="flex gap-4">
+              <div className="flex-1 my-2">
+                <p className="text-[12px] font-[500] pb-1">
+                  Daily Transaction Limit <span className="text-[#D50000]">*</span>
+                </p>
+                <Input
+                  prefix={"₹"}
+                  type="number"
+                  min={1}
+                  value={data?.dailyLimit}
+                  onChange={(e) =>
+                    setData((prev) => ({ ...prev, dailyLimit: e.target.value }))
+                  }
+                  className="w-full text-[12px]"
+                  placeholder="Daily Transaction Limit"
+                />
+              </div>
+            </div>
           </>
         )}
         {activeTab === "crypto" && (
@@ -1081,9 +1117,9 @@ const BankManagement = ({ authorization, showSidebar }) => {
                   Crypto Wallet ID <span className="text-[#D50000]">*</span>
                 </p>
                 <Input
-                  value={data?.crypto}
+                  value={data?.iban}
                   onChange={(e) =>
-                    setData((prev) => ({ ...prev, crypto: e.target.value }))
+                    setData((prev) => ({ ...prev, iban: e.target.value }))
                   }
                   className="w-full text-[12px]"
                   placeholder="Enter Crupto Wallet ID"
@@ -1161,6 +1197,23 @@ const BankManagement = ({ authorization, showSidebar }) => {
                 placeholder="Select QR Code"
               />
             </div>
+            {/* daily limit */}
+            <div className="flex gap-4">
+              <div className="flex-1 my-2">
+                <p className="text-[12px] font-[500] pb-1">
+                  Daily Transaction Limit <span className="text-[#D50000]">*</span>
+                </p>
+                <Input
+                  prefix={"₹"}
+                  value={data?.dailyLimit}
+                  onChange={(e) =>
+                    setData((prev) => ({ ...prev, dailyLimit: e.target.value }))
+                  }
+                  className="w-full text-[12px]"
+                  placeholder="Daily Transaction Limit"
+                />
+              </div>
+            </div>
           </>
         )}
         {activeTab === "upi" && (
@@ -1237,6 +1290,23 @@ const BankManagement = ({ authorization, showSidebar }) => {
                 className="w-full text-[12px]"
                 placeholder="Select QR Code"
               />
+            </div>
+            {/* daily limit */}
+            <div className="flex gap-4">
+              <div className="flex-1 my-2">
+                <p className="text-[12px] font-[500] pb-1">
+                  Daily Transaction Limit <span className="text-[#D50000]">*</span>
+                </p>
+                <Input
+                  prefix={"₹"}
+                  value={data?.dailyLimit}
+                  onChange={(e) =>
+                    setData((prev) => ({ ...prev, dailyLimit: e.target.value }))
+                  }
+                  className="w-full text-[12px]"
+                  placeholder="Daily Transaction Limit"
+                />
+              </div>
             </div>
           </>
         )}

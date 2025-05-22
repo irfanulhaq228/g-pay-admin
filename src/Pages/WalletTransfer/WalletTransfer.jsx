@@ -312,6 +312,8 @@ const WalletTransfer = ({ authorization, showSidebar }) => {
                         </label>
                         <Input
                             type="number"
+                            min={1}
+                            step={0.01}
                             value={amount}
                             prefix={<FaIndianRupeeSign />}
                             placeholder="Enter amount"

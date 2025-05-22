@@ -1,22 +1,20 @@
 import moment from "moment/moment";
-import { MagnifyingGlass } from "react-loader-spinner";
-import { Pagination, notification } from "antd";
-import "react-datepicker/dist/react-datepicker.css";
-import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiUpload } from "react-icons/fi";
-import { FiEye } from "react-icons/fi";
-import Cookies from "js-cookie";
-import * as XLSX from "xlsx";
+import { Pagination, notification } from "antd";
+import React, { useState, useEffect } from "react";
+import "react-datepicker/dist/react-datepicker.css";
+
 import { fn_getUploadExcelFileData } from "../../api/api";
 
+import { FiEye } from "react-icons/fi";
+
 const Payout = ({ authorization, showSidebar }) => {
+
   const navigate = useNavigate();
+  const [slipData, setSlipData] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const containerHeight = window.innerHeight - 120;
   const [currentPage, setCurrentPage] = useState(1);
-  const [slipData, setSlipData] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   const getExcelFile = async () => {
     try {

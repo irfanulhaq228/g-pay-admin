@@ -1,3 +1,5 @@
+import axios from "axios";
+import Cookies from "js-cookie";
 import moment from 'moment-timezone';
 import { TiTick } from "react-icons/ti";
 import { FiEye } from "react-icons/fi";
@@ -27,6 +29,27 @@ const PayoutDetails = ({ showSidebar }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [selectedWithdrawData, setSelectedWithdrawData] = useState(null);
+
+  const [editPermission, setEditPermission] = useState(true);
+  const [remarks, setRemarks] = useState(""); // Add state for remarks
+
+  const fn_getStaffDetials = async () => {
+    try {
+      const res = await axios.get(`${BACKEND_URL}/adminStaff/get/${Cookies.get("adminId")}`);
+      if (res?.status === 200) {
+        setEditPermission(res?.data?.data?.editPermission)
+      }
+    } catch (error) {
+      setEditPermission(true);
+      console.error("Error fetching staff details:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (Cookies.get("type") === "staff") {
+      fn_getStaffDetials();
+    }
+  }, []);
 
   const handleMouseMove = (e) => {
     const { left, top, width, height } = e.target.getBoundingClientRect();
@@ -102,6 +125,7 @@ const PayoutDetails = ({ showSidebar }) => {
     setImage(null);
     setImagePreview(null);
     setUtr("");
+    setRemarks(""); // Reset remarks
     setIsModalVisible(true);
   };
 
@@ -110,6 +134,7 @@ const PayoutDetails = ({ showSidebar }) => {
     setImage(null);
     setImagePreview(null);
     setUtr("");
+    setRemarks(""); // Reset remarks
     setSelectedWithdrawData(null);
   };
 
@@ -121,13 +146,24 @@ const PayoutDetails = ({ showSidebar }) => {
           description: "Please enter UTR number.",
           placement: "topRight",
         });
-      };
+      }
+      if (action === "Decline" && remarks === "") {
+        return notification.error({
+          message: "Error",
+          description: "Please provide remarks for declining.",
+          placement: "topRight",
+        });
+      }
       const formData = new FormData();
       if (image) {
         formData.append("image", image);
-      };
+      }
       formData.append("status", action);
       formData.append("utr", utr);
+      formData.append("remarks", remarks); // Include remarks in the request
+      if (Cookies.get('type') === "staff") {
+        formData.append('adminStaffId', Cookies.get('adminId'))
+      }
       const response = await fn_updatePayoutStatus(id, formData);
       if (response.status) {
         notification.success({
@@ -175,10 +211,10 @@ Amount: ₹ ${item.amount}
 UTR Number: ${item.utr || "N/A"}
 Created Date: ${moment.utc(item?.createdAt).format('DD MMM YYYY, hh:mm A')}
 Updated Date: ${moment.utc(item?.updatedAt)
-  .tz('Asia/Kolkata')
-  .format('DD MMM YYYY, hh:mm A')}`
+        .tz('Asia/Kolkata')
+        .format('DD MMM YYYY, hh:mm A')}`
 
-   navigator.clipboard.writeText(detailsToCopy).then(() => {
+    navigator.clipboard.writeText(detailsToCopy).then(() => {
       setCopiedId(index);
       notification.success({
         message: "Copied!",
@@ -246,13 +282,13 @@ Updated Date: ${moment.utc(item?.updatedAt)
                           {item?.username}
                         </td>
                         <td className="p-4 text-[12px] font-[600] text-[#000000B2]">
-                          {item?.bankName}
+                          {item?.bankName || "UPI"}
                         </td>
                         <td className="p-4 text-[12px] font-[600] text-[#000000B2] text-nowrap">
                           {item?.account}
                         </td>
                         <td className="p-4 text-[12px] font-[600] text-[#000000B2] text-nowrap">
-                          {item?.ifsc || "IFSC Number"}
+                          {item?.ifsc || "-"}
                         </td>
                         <td className="p-4 text-[12px] font-[700] text-[#000000B2]">
                           ₹ {item?.amount}
@@ -341,7 +377,7 @@ Updated Date: ${moment.utc(item?.updatedAt)
                       value={selectedWithdrawData?.username || "N/A"}
                     />
                   </div>
-
+                  {/* Account Number */}
                   <div className="flex items-center gap-4">
                     <p className="text-[12px] font-[600] w-[200px]">
                       Account Number:
@@ -361,7 +397,6 @@ Updated Date: ${moment.utc(item?.updatedAt)
                       value={selectedWithdrawData?.ifsc || "-"}
                     />
                   </div>
-
                   {/* Amount */}
                   <div className="flex items-center gap-4">
                     <p className="text-[12px] font-[600] w-[200px]">Amount:</p>
@@ -371,7 +406,6 @@ Updated Date: ${moment.utc(item?.updatedAt)
                       value={`₹ ${selectedWithdrawData?.amount}` || "N/A"}
                     />
                   </div>
-
                   {/* Withdraw Amount  */}
                   <div className="flex items-center gap-4">
                     <p className="text-[12px] font-[600] w-[200px]">Withdrawal Amount:</p>
@@ -381,10 +415,8 @@ Updated Date: ${moment.utc(item?.updatedAt)
                       value={`₹ ${selectedWithdrawData?.withdrawAmount ?? ""}`}
                     />
                   </div>
-
                   {/* Status Section */}
                   <div className="border-t mt-2 mb-1"></div>
-
                   {/* UTR Number */}
                   {selectedWithdrawData.utr && (
                     <div className="flex items-center gap-4">
@@ -396,6 +428,7 @@ Updated Date: ${moment.utc(item?.updatedAt)
                       />
                     </div>
                   )}
+
                   <div className="flex items-center mt-2 gap-2">
                     <p className="text-[14px] font-[600] w-[150px]">STATUS:</p>
                     <div
@@ -405,10 +438,8 @@ Updated Date: ${moment.utc(item?.updatedAt)
                     </div>
                   </div>
 
-
-
                   {/* Action Section for Pending Status */}
-                  {selectedWithdrawData?.status === "Pending" && selectedWithdrawData?.status !== "Cancel" && (
+                  {selectedWithdrawData?.status === "Pending" && editPermission && (
                     <>
                       <div className="border-t mt-2 mb-1"></div>
 
@@ -449,6 +480,21 @@ Updated Date: ${moment.utc(item?.updatedAt)
                         )}
                       </div>
 
+                      {/* Remarks Field for Decline */}
+                      {selectedWithdrawData?.status === "Pending" && (
+                        <div className="flex flex-col gap-2 mt-4">
+                          <p className="text-gray-600 text-[12px] font-[600]">
+                            Remarks (Required for Decline):
+                          </p>
+                          <Input.TextArea
+                            rows={3}
+                            value={remarks}
+                            onChange={(e) => setRemarks(e.target.value)}
+                            placeholder="Enter remarks for declining the payout"
+                          />
+                        </div>
+                      )}
+
                       {/* Action Buttons */}
                       <div className="flex gap-4 mt-4">
                         <button
@@ -468,11 +514,146 @@ Updated Date: ${moment.utc(item?.updatedAt)
                       </div>
                     </>
                   )}
+
+                  {/* Allow status updates for non-pending statuses */}
+                  {selectedWithdrawData?.status !== "Pending" && editPermission && (
+                    <>
+                      <div className="border-t mt-2 mb-1"></div>
+                      {selectedWithdrawData?.status === "Decline" && (
+                        <div className="flex items-center mt-1">
+                          <p className="min-w-[150px] text-gray-600 text-[12px] font-[600]">
+                            Enter UTR<span className="text-red-500"> *</span>:
+                          </p>
+                          <Input
+                            className="text-[12px]"
+                            value={utr}
+                            onChange={(e) => setUtr(e.target.value)}
+                          />
+                        </div>
+                      )}
+                      {selectedWithdrawData?.status === "Decline" && (
+                        <div className="flex flex-col gap-2 mt-1">
+                          <p className="text-gray-600 text-[12px] font-[600]">
+                            Upload Proof:
+                          </p>
+                          <input
+                            type="file"
+                            onChange={handleImageChange}
+                            accept="image/*"
+                            className="mb-2"
+                          />
+                          {imagePreview && (
+                            <div className="mt-2">
+                              <p className="text-gray-600 text-[12px] font-[600] mb-1">
+                                Preview:
+                              </p>
+                              <img
+                                src={imagePreview}
+                                alt="Upload Preview"
+                                className="max-w-[300px] h-auto rounded-lg border"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {selectedWithdrawData?.status === "Approved" && (
+                        <div className="flex flex-col gap-2 mt-1">
+                          <p className="text-gray-600 text-[12px] font-[600]">
+                            Remarks (Required for Decline):
+                          </p>
+                          <Input.TextArea
+                            rows={3}
+                            value={remarks}
+                            onChange={(e) => setRemarks(e.target.value)}
+                            placeholder="Enter remarks for declining the payout"
+                          />
+                        </div>
+                      )}
+                      <p className="mt-1 font-[600]">Update Status</p>
+                      <div className="flex gap-4">
+                        {selectedWithdrawData?.status === "Decline" && (
+                          <button
+                            className="flex-1 bg-[#03996933] flex items-center justify-center text-[#039969] p-2 rounded hover:bg-[#03996950] text-[13px]"
+                            onClick={() => handlePayoutAction("Approved", selectedWithdrawData?._id)}
+                          >
+                            <IoMdCheckmark className="mt-[3px] mr-[6px]" />
+                            Approve Withdraw
+                          </button>
+                        )}
+                        {selectedWithdrawData?.status === "Approved" && (
+                          <button
+                            className="w-24 bg-[#FF405F33] flex items-center justify-center text-[#FF3F5F] p-2 rounded hover:bg-[#FF405F50] text-[13px]"
+                            onClick={() => handlePayoutAction("Decline", selectedWithdrawData?._id)}
+                          >
+                            <GoCircleSlash className="mt-[3px] mr-[6px]" />
+                            Decline
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {selectedWithdrawData?.status !== "Pending" && (
+                    <>
+                      <div className="border-t mt-2 mb-1"></div>
+                      <div className="mt-1">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="bg-gray-100">
+                              <th className="p-2 text-center text-[12px] font-[600] border">
+                                Date
+                              </th>
+                              <th className="p-2 text-center text-[12px] font-[600] border text-nowrap">
+                                Action By
+                              </th>
+                              <th className="p-2 text-center text-[12px] font-[600] border">
+                                Status
+                              </th>
+                              <th className="p-2 text-[12px] font-[600] border text-center">
+                                Remarks
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedWithdrawData?.transactionLogs?.map((log) => (
+                              <tr>
+                                <td className="p-2 text-[12px] border text-nowrap">
+                                  {moment(log?.updatedAt)
+                                    .tz("Asia/Kolkata")
+                                    .format("DD MMM YYYY, hh:mm A")}
+                                </td>
+                                <td className="p-2 text-[12px] border">
+                                  {log?.actionBy || "Admin"}
+                                </td>
+                                <td className="p-2 text-[12px] border">
+                                  <span
+                                    className={`px-2 py-1 rounded-[20px] text-nowrap text-[11px] font-[600] ${log?.status === "Approved"
+                                      ? "bg-[#10CB0026] text-[#0DA000]"
+                                      : log?.status === "Pending"
+                                        ? "bg-[#FFC70126] text-[#FFB800]"
+                                        : log?.status === "Manual Verified"
+                                          ? "bg-[#0865e851] text-[#0864E8]"
+                                          : "bg-[#FF7A8F33] text-[#FF002A]"
+                                      }`}
+                                  >
+                                    {log?.status}
+                                  </span>
+                                </td>
+                                <td className="p-2 text-[12px] border text-nowrap text-center" title={log?.status === "Decline" ? log?.remarks : "-"}>
+                                  {log?.status === "Decline" ? log?.remarks?.slice(0, 15) : "-"}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
               {/* Right Column - Only show for non-pending status */}
-              {selectedWithdrawData.status !== "Pending" && selectedWithdrawData.status !== "Cancel" && selectedWithdrawData?.status !== "Decline" && (
+              {selectedWithdrawData.status !== "Pending" && selectedWithdrawData.status !== "Cancel" && selectedWithdrawData?.status !== "Decline" && editPermission && (
                 <div className="w-[350px] border-l pl-4">
                   <div className="flex flex-col gap-4">
                     {/* Payment Proof */}

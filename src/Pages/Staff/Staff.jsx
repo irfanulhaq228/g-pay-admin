@@ -285,6 +285,7 @@ const Staff = ({ showSidebar }) => {
                                         <th className="p-3 text-[13px] font-[600]">Name</th>
                                         <th className="p-3 text-[13px] font-[600]">Email</th>
                                         <th className="p-3 text-[13px] font-[600]">Type</th>
+                                        <th className="p-3 text-[13px] font-[600]">Edit Permission</th>
                                         <th className="pl-7 text-[13px] font-[600]">Status</th>
                                         <th className="p-3 text-[13px] font-[600] text-center">Actions</th>
                                     </tr>
@@ -296,6 +297,7 @@ const Staff = ({ showSidebar }) => {
                                             <td className="p-3 text-[13px]">{staff.userName}</td>
                                             <td className="p-3 text-[13px]">{staff.email}</td>
                                             <td className="p-3 text-[13px]">{staff.type}</td>
+                                            <td className="p-3 text-[13px]">{staff.editPermission ? "Yes" : "No"}</td>
                                             <td className="p-3">
                                                 <button className={`px-3 py-[5px] rounded-[20px] w-20 flex items-center justify-center text-[11px] font-[500] ${!staff.block ? "bg-[#10CB0026] text-[#0DA000]" : "bg-[#FF173D33] text-[#D50000]"}`}>
                                                     {!staff.block ? "Active" : "Inactive"}

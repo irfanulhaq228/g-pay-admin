@@ -32,6 +32,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
     const [token, setToken] = useState("");
     const [open, setOpen] = useState(false);
     const [image, setImage] = useState(null);
+    const [remarks, setRemarks] = useState("");
     const [loading, setLoading] = useState(true);
     const containerHeight = window.innerHeight - 120;
     const [transactions, setTransactions] = useState([]);
@@ -49,6 +50,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
     const [exchanges, setExchanges] = useState([]);
     const [exchange, setExchange] = useState(null);
     const [totalPages, setTotalPages] = useState(1);
+    const [newStatus, setNewStatus] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [qrCodeImage, setQrCodeImage] = useState(null);
     const [exchangeData, setExchangeData] = useState({});
@@ -57,13 +59,11 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
     const [qrCodePreview, setQrCodePreview] = useState(null);
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [merchantWallet, setMerchantWallet] = useState(null);
+    const [selectedOption, setSelectedOption] = useState(null);
     const [selectedMerchant, setSelectedMerchant] = useState(null);
     const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
-    const [newStatus, setNewStatus] = useState(null);
-    const [selectedOption, setSelectedOption] = useState(null);
     const [declineButtonClicked, setDeclinedButtonClicked] = useState(false);
 
-    
     const [editPermission, setEditPermission] = useState(true);
 
     const fn_getStaffDetials = async () => {
@@ -73,9 +73,10 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                 setEditPermission(res?.data?.data?.editPermission)
             }
         } catch (error) {
+            setEditPermission(true);
             console.error("Error fetching staff details:", error);
         }
-    }
+    };
 
     useEffect(() => {
         fetchPortal();
@@ -227,6 +228,14 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
             });
         };
 
+        if (Number(withdrawAmount) < 1) {
+            return notification.error({
+                message: "Error",
+                description: "Please Enter Valid Amount",
+                placement: "topRight",
+            });
+        };
+
         if (exchange === "67c1e65de5d59894e5a19435" && !selectedBank) {
             return notification.error({
                 message: "Error",
@@ -341,21 +350,29 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
         setImage(null);
         setImagePreview(null);
         setOpen(false);
+        setRemarks("");
+        setDeclinedButtonClicked(false);
+        setNewStatus(null);
     };
 
     const handleTransactionAction = async (action, id) => {
         try {
             const isBankOrUPI = selectedTransaction?.exchangeId?._id === "67c1e65de5d59894e5a19435";
-            if (action === "Approved" &&
-                selectedTransaction?.withdrawBankId &&
-                isBankOrUPI &&
-                utr === "") {
+            if (action === "Approved" && selectedTransaction?.withdrawBankId && isBankOrUPI && utr === "") {
                 return notification.error({
                     message: "Error",
                     description: "Enter UTR",
                     placement: "topRight"
                 });
-            }
+            };
+
+            if(action === "Decline" && remarks === "") {
+                return notification.error({
+                    message: "Error",
+                    description: "Enter Remarks",
+                    placement: "topRight"
+                });
+            };
 
             const token = Cookies.get("token");
             const userId = Cookies.get('adminId');
@@ -363,6 +380,9 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
             const formData = new FormData();
             formData.append("status", action);
             formData.append("utr", utr);
+            if (action === "Decline") {
+                formData.append("remarks", remarks);
+            }
 
             // Only append adminStaffId if type is staff and userId exists
             if (type === 'staff' && userId) {
@@ -456,6 +476,8 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
         }
     }, [selectedMerchant]);
 
+    console.log("editPermission ", editPermission);
+
     return (
         <>
             <div
@@ -477,7 +499,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                 </p>
                             </div>
                             {/* Add back the withdraw button */}
-                            {Cookies.get("type") === "admin" && (
+                            {editPermission && (
                                 <Button type="primary" onClick={handleWithdrawRequest}>
                                     Create Withdraw
                                 </Button>
@@ -661,48 +683,47 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                 )}
 
                                 {/* AED and By Cash Details */}
-                                {(selectedTransaction?.exchangeId?._id === "67c1cafffd672c91b4a768cb" ||
-                                    selectedTransaction?.exchangeId?._id === "67c1cb2ffd672c91b4a769b2") && (
-                                        <>
-                                            <div className="border-t mt-2 mb-1"></div>
-                                            <p className="font-[600] text-[14px] mb-2">Cash Withdrawal Details</p>
+                                {(selectedTransaction?.exchangeId?._id === "67c1cafffd672c91b4a768cb" || selectedTransaction?.exchangeId?._id === "67c1cb2ffd672c91b4a769b2") && (
+                                    <>
+                                        <div className="border-t mt-2 mb-1"></div>
+                                        <p className="font-[600] text-[14px] mb-2">Cash Withdrawal Details</p>
 
-                                            <div className="flex items-center gap-4">
-                                                <p className="text-[12px] font-[600] w-[200px]">Location:</p>
-                                                <Input
-                                                    className="text-[12px] bg-gray-200"
-                                                    readOnly
-                                                    value={selectedTransaction?.locationId?.location || 'N/A'}
-                                                />
-                                            </div>
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Location:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={selectedTransaction?.locationId?.location || 'N/A'}
+                                            />
+                                        </div>
 
-                                            <div className="flex items-center gap-4">
-                                                <p className="text-[12px] font-[600] w-[200px]">Name:</p>
-                                                <Input
-                                                    className="text-[12px] bg-gray-200"
-                                                    readOnly
-                                                    value={selectedTransaction?.customerName || 'N/A'}
-                                                />
-                                            </div>
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Name:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={selectedTransaction?.customerName || 'N/A'}
+                                            />
+                                        </div>
 
-                                            <div className="flex items-center gap-4">
-                                                <p className="text-[12px] font-[600] w-[200px]">Contact Number:</p>
-                                                <Input
-                                                    className="text-[12px] bg-gray-200"
-                                                    readOnly
-                                                    value={selectedTransaction?.contactNumber || 'N/A'}
-                                                />
-                                            </div>
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Contact Number:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={selectedTransaction?.contactNumber || 'N/A'}
+                                            />
+                                        </div>
 
-                                            <div className="flex items-center gap-4">
-                                                <p className="text-[12px] font-[600] w-[200px]">Token:</p>
-                                                <div
-                                                    className="text-[12px] bg-gray-200 p-2 rounded w-full"
-                                                    dangerouslySetInnerHTML={{ __html: selectedTransaction?.token || 'N/A' }}
-                                                />
-                                            </div>
-                                        </>
-                                    )}
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Token:</p>
+                                            <div
+                                                className="text-[12px] bg-gray-200 p-2 rounded w-full"
+                                                dangerouslySetInnerHTML={{ __html: selectedTransaction?.token || 'N/A' }}
+                                            />
+                                        </div>
+                                    </>
+                                )}
 
                                 {/* Portal Details */}
                                 {selectedTransaction?.exchangeId?._id === "67c20f130213c2d397da36c9" && (
@@ -751,13 +772,14 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                         value={selectedTransaction?.note || 'N/A'} F
                                     />
                                 </div>
+
                                 {/* Action Buttons */}
                                 {selectedTransaction?.status === "Pending" && selectedTransaction?.withdrawBankId && (
                                     <>
                                         <div className="border-t mt-2 mb-1"></div>
 
                                         {/* Show UTR only if not By Cash */}
-                                        {selectedTransaction?.exchangeId?._id === "67c1e65de5d59894e5a19435" && (
+                                        {(selectedTransaction?.exchangeId?._id === "67c1e65de5d59894e5a19435" || selectedTransaction?.exchangeId?.currency === "Bank/UPI") && (
                                             <div className="flex items-center mb-3">
                                                 <p className="min-w-[150px] text-gray-600 text-[12px] font-[600]">
                                                     Enter UTR<span className="text-red-500">{" "}*</span>:
@@ -791,28 +813,70 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                         </div>
                                     </>
                                 )}
+
+                                {declineButtonClicked && (
+                                    <>
+                                        <div className="border-t mt-2 mb-1"></div>
+                                        <div className="flex flex-col gap-2">
+                                            <p className="text-[12px] font-[600]">Enter Remarks:</p>
+                                            <textarea
+                                                rows={2}
+                                                value={remarks}
+                                                onChange={(e) => setRemarks(e.target.value)}
+                                                placeholder="Please Enter Remarks of Decline"
+                                                className="w-full p-2 text-[12px] border rounded resize-none outline-none"
+                                            />
+                                        </div>
+                                    </>
+                                )}
+
                                 {selectedTransaction?.status === "Pending" && editPermission && (
                                     <div className="flex gap-4 mt-2">
-                                        <button
-                                            className="flex-1 bg-[#03996933] flex items-center justify-center text-[#039969] p-2 rounded hover:bg-[#03996950] text-[13px]"
-                                            onClick={() => handleTransactionAction("Approved", selectedTransaction?._id)}
-                                            disabled={selectedTransaction?.status === "Approved" || selectedTransaction?.status === "Decline"}
-                                        >
-                                            <IoMdCheckmark className="mt-[3px] mr-[6px]" />
-                                            Approve Withdrawal
-                                        </button>
-                                        <button
-                                            className="w-24 bg-[#FF405F33] flex items-center justify-center text-[#FF3F5F] p-2 rounded hover:bg-[#FF405F50] text-[13px]"
-                                            onClick={() => handleTransactionAction("Decline", selectedTransaction?._id)}
-                                            disabled={selectedTransaction?.status === "Approved" || selectedTransaction?.status === "Decline"}
-                                        >
-                                            <GoCircleSlash className="mt-[3px] mr-[6px]" />
-                                            Decline
-                                        </button>
+                                        {!declineButtonClicked && (
+                                            <button
+                                                className="flex-1 bg-[#03996933] flex items-center justify-center text-[#039969] p-2 rounded hover:bg-[#03996950] text-[13px]"
+                                                onClick={() => handleTransactionAction("Approved", selectedTransaction?._id)}
+                                                disabled={selectedTransaction?.status === "Approved" || selectedTransaction?.status === "Decline"}
+                                            >
+                                                <IoMdCheckmark className="mt-[3px] mr-[6px]" />
+                                                Approve Withdrawal
+                                            </button>
+                                        )}
+                                        {declineButtonClicked && (
+                                            <button
+                                                className="w-24 bg-[#FF405F33] flex items-center justify-center text-[#FF3F5F] p-2 rounded hover:bg-[#FF405F50] text-[13px]"
+                                                onClick={() => handleTransactionAction("Decline", selectedTransaction?._id)}
+                                                disabled={selectedTransaction?.status === "Approved" || selectedTransaction?.status === "Decline"}
+                                            >
+                                                <GoCircleSlash className="mt-[3px] mr-[6px]" />
+                                                Decline
+                                            </button>
+                                        )}
+                                        {declineButtonClicked && (
+                                            <button
+                                                className="w-32 bg-[#bcbcbc] flex items-center justify-center text-[#000] p-2 rounded hover:bg-[#aaaaaa] text-[13px]"
+                                                onClick={() => { setDeclinedButtonClicked(false); setRemarks("") }}
+                                                disabled={selectedTransaction?.status === "Approved" || selectedTransaction?.status === "Decline"}
+                                            >
+                                                <GoCircleSlash className="mt-[3px] mr-[6px]" />
+                                                Cancel Decline
+                                            </button>
+                                        )}
+                                        {!declineButtonClicked && (
+                                            <button
+                                                className="w-24 bg-[#FF405F33] flex items-center justify-center text-[#FF3F5F] p-2 rounded hover:bg-[#FF405F50] text-[13px]"
+                                                onClick={() => setDeclinedButtonClicked(true)}
+                                                disabled={selectedTransaction?.status === "Approved" || selectedTransaction?.status === "Decline"}
+                                            >
+                                                <GoCircleSlash className="mt-[3px] mr-[6px]" />
+                                                Decline
+                                            </button>
+                                        )}
                                     </div>
                                 )}
+
                                 {/* Update Status Section */}
-                                {selectedTransaction?.status !== "Pending" && Cookies.get("type") === "admin" && (
+                                {selectedTransaction?.status !== "Pending" && editPermission && (
                                     <div>
                                         <div className="border-t mt-4 mb-2"></div>
                                         <div className="flex flex-col mt-3">
@@ -826,6 +890,9 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                                     placeholder="Select new status"
                                                     value={newStatus}
                                                     onChange={(value) => {
+                                                        if(value === "Decline" && selectedTransaction?.status === "Approved") {
+                                                            setDeclinedButtonClicked(true);
+                                                        };
                                                         setNewStatus(value);
                                                     }}
                                                 >
@@ -849,7 +916,6 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                                                 newStatus,
                                                                 selectedTransaction?._id
                                                             );
-                                                            setNewStatus(null);
                                                         }}
                                                     >
                                                         <IoMdCheckmark className="mt-[3px] mr-[6px]" />
@@ -860,21 +926,21 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                         </div>
                                     </div>
                                 )}
+
                                 {/* Show status at bottom if approved without UTR or declined */}
-                                {(selectedTransaction.status === "Decline" ||
-                                    (selectedTransaction.status === "Approved" && !selectedTransaction.utr)) && (
-                                        <>
-                                            <div className="border-t mt-2 mb-1"></div>
-                                            <div>
-                                                <div className={`w-[100px] px-3 py-2 rounded-[20px] text-center text-[13px] font-[600] ${selectedTransaction.status === "Decline" ?
-                                                    "bg-[#FF7A8F33] text-[#FF002A]" :
-                                                    "bg-[#10CB0026] text-[#0DA000]"
-                                                    }`}>
-                                                    {selectedTransaction.status}
-                                                </div>
+                                {(selectedTransaction.status === "Decline" || (selectedTransaction.status === "Approved" && !selectedTransaction.utr)) && (
+                                    <>
+                                        <div className="border-t mt-2 mb-1"></div>
+                                        <div>
+                                            <div className={`w-[100px] px-3 py-2 rounded-[20px] text-center text-[13px] font-[600] ${selectedTransaction.status === "Decline" ?
+                                                "bg-[#FF7A8F33] text-[#FF002A]" :
+                                                "bg-[#10CB0026] text-[#0DA000]"
+                                                }`}>
+                                                {selectedTransaction.status}
                                             </div>
-                                        </>
-                                    )}
+                                        </div>
+                                    </>
+                                )}
 
                                 {/* Transaction Logs Table */}
                                 {selectedTransaction?.withdrawLogs?.length > 0 && (
@@ -892,6 +958,9 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                                             Action By
                                                         </th>
                                                         <th className="p-2 text-center text-[12px] font-[600] border">
+                                                            Remarks
+                                                        </th>
+                                                        <th className="p-2 text-center text-[12px] font-[600] border">
                                                             Status
                                                         </th>
                                                     </tr>
@@ -906,6 +975,9 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                                             </td>
                                                             <td className="p-2 text-[12px] border">
                                                                 {log?.actionBy || "Admin"}
+                                                            </td>
+                                                            <td className="p-2 text-[12px] border" title={(log?.remarks === "" || !log?.remarks) ? "-" : log?.remarks}>
+                                                                {(log?.remarks === "" || !log?.remarks) ? "-" : log?.remarks.slice(0, 15)}
                                                             </td>
                                                             <td className="p-2 text-[12px] border">
                                                                 <span
@@ -1016,10 +1088,12 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                             Amount
                         </label>
                         <Input
-                            prefix={<FaIndianRupeeSign />}
+                            min={1}
+                            step={0.01}
                             type="number"
-                            placeholder="Enter amount"
                             value={withdrawAmount}
+                            placeholder="Enter amount"
+                            prefix={<FaIndianRupeeSign />}
                             onChange={(e) => setWithdrawAmount(e.target.value)}
                         />
                     </div>

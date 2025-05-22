@@ -97,7 +97,7 @@ const SideBar = ({ showSidebar, setShowSide, setAuthorization }) => {
           />
         )}
         {/* payout */}
-        {loginType === "admin" && (
+        {(staffType === "withdraw" || loginType === "admin") && (
           <Menu
             onClick={() =>
               handleMenuClick("payout", "/payout")

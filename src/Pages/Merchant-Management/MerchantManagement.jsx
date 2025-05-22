@@ -1,34 +1,26 @@
 import { FiEdit } from "react-icons/fi";
-import logo from "../../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
-import Rectangle from "../../assets/Rectangle.jpg";
 import { Switch, Button, Modal, Input, notification } from "antd";
-import BACKEND_URL, {
-  fn_createMerchantApi,
-  fn_getMerchantApi,
-  fn_MerchantUpdate,
-} from "../../api/api";
-import Cookies from "js-cookie";
+import { fn_createMerchantApi, fn_getMerchantApi, fn_MerchantUpdate } from "../../api/api";
+import moment from "moment";
 
-const MerchantManagement = ({ authorization, showSidebar, setAuthorization }) => {
+const MerchantManagement = ({ authorization, showSidebar }) => {
   const { TextArea } = Input;
   const navigate = useNavigate();
   const [tax, setTax] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState({});
-  const [image, setImage] = useState(null);
-  const [website, setWebsite] = useState("");
   const [password, setPassword] = useState("");
   const [open, setOpen] = React.useState(false);
-  const [commision, setCommision] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const containerHeight = window.innerHeight - 120;
   const [accountLimit, setAccountLimit] = useState("");
   const [merchantName, setMerchantName] = useState("");
   const [merchantsData, setMerchantsData] = useState([]);
   const [merchantWebsite, setMerchantWebsite] = useState("");
+  const [dailyMerchantLimit, setDailyMerchantLimit] = useState("");
   const [payoutCommision, setPayoutCommision] = useState("");
   const [websiteUseForPayment, setWebsiteUseForPayment] = useState("");
   const [selectedMerchant, setSelectedMerchant] = useState(null);
@@ -79,6 +71,7 @@ const MerchantManagement = ({ authorization, showSidebar, setAuthorization }) =>
     if (!String(merchantWebsite).trim())
       newErrors.merchantWebsite = "Merchant Website is required.";
     if (!String(tax).trim()) newErrors.tax = "Tax is required.";
+    if (!String(dailyMerchantLimit).trim()) newErrors.tax = "Daily Merchant Trn. Limit is required.";
     if (!String(payoutCommision).trim())
       newErrors.payoutCommision = "Payout Commission is required.";
 
@@ -89,7 +82,6 @@ const MerchantManagement = ({ authorization, showSidebar, setAuthorization }) =>
     setErrors({});
 
     const formData = new FormData();
-    formData.append("image", image);
     formData.append("merchantName", merchantName);
     formData.append("phone", phone);
     formData.append("email", email);
@@ -99,6 +91,10 @@ const MerchantManagement = ({ authorization, showSidebar, setAuthorization }) =>
     formData.append("merchantWebsite", merchantWebsite);
     formData.append("commision", parseFloat(tax));
     formData.append("payoutCommision", parseFloat(payoutCommision));
+    if (dailyMerchantLimit != selectedMerchant?.dailyMerchantLimit) {
+      formData.append("dailyMerchantLimit", dailyMerchantLimit);
+      formData.append("remainingDailyMerchantLimit", dailyMerchantLimit);
+    }
     try {
       let response;
       if (selectedMerchant) {
@@ -124,11 +120,11 @@ const MerchantManagement = ({ authorization, showSidebar, setAuthorization }) =>
         setEmail("");
         setPassword("");
         setAccountLimit("");
+        setDailyMerchantLimit("");
         setWebsiteUseForPayment("");
         setMerchantWebsite("");
         setTax("");
         setPayoutCommision("");
-        setImage(null);
         fn_getMerchant();
       } else {
         notification.error({
@@ -276,10 +272,10 @@ const MerchantManagement = ({ authorization, showSidebar, setAuthorization }) =>
                           setPassword("");
                           setAccountLimit("");
                           setWebsiteUseForPayment("");
+                          setDailyMerchantLimit("");
                           setMerchantWebsite("");
                           setTax("");
                           setPayoutCommision("");
-                          setImage(null);
                         }}
                       >
                         Cancel
@@ -300,7 +296,7 @@ const MerchantManagement = ({ authorization, showSidebar, setAuthorization }) =>
                     setMerchantWebsite("");
                     setTax("");
                     setPayoutCommision("");
-                    setImage(null);
+
                   }}
                 >
                   <div className="flex gap-4">
@@ -414,6 +410,20 @@ const MerchantManagement = ({ authorization, showSidebar, setAuthorization }) =>
 
                   <div className="my-2">
                     <p>
+                      Merchant Daily Trn. Limit <span className="text-[#D50000]">*</span>
+                    </p>
+                    <Input
+                      placeholder="Enter merchant daily transaction limit"
+                      value={dailyMerchantLimit}
+                      onChange={(e) => setDailyMerchantLimit(e.target.value)}
+                    />
+                    {errors.dailyMerchantLimit && (
+                      <p className="text-red-500">{errors.dailyMerchantLimit}</p>
+                    )}
+                  </div>
+
+                  <div className="my-2">
+                    <p>
                       Admin Commission (%) <span className="text-[#D50000]">*</span>
                     </p>
                     <Input
@@ -464,7 +474,8 @@ const MerchantManagement = ({ authorization, showSidebar, setAuthorization }) =>
                     <th className="p-5 text-[13px] font-[600] text-nowrap">
                       Website For Payment
                     </th>
-                    <th className="p-5 text-[13px] font-[600]">Limit</th>
+                    <th className="p-5 text-[13px] font-[600]">Transaction Limit</th>
+                    <th className="p-5 text-[13px] font-[600]">Daily Trn. Limit</th>
                     <th className="p-5 pl-2 text-[13px] font-[600] text-nowrap">Pay-In-Commission</th>
                     <th className="p-5 pl-2 text-[13px] font-[600] text-nowrap">Pay-Out-Commission</th>
                     <th className="p-5 text-[13px] font-[600]">Status</th>
@@ -501,7 +512,10 @@ const MerchantManagement = ({ authorization, showSidebar, setAuthorization }) =>
                           <span className="pl-2">{merchant.website}</span>
                         </td>
                         <td className="p-3 text-[13px] font-[400] text-nowrap">
-                          ₹ {merchant.accountLimit}
+                          ₹ {merchant.accountLimit} / ₹ {merchant?.remainingAccountLimit || merchant.accountLimit}
+                        </td>
+                        <td className="p-3 text-[13px] font-[400] text-nowrap">
+                          ₹ {merchant.dailyMerchantLimit} / ₹ {merchant?.remainingDailyMerchantLimit}
                         </td>
                         <td className="p-3 text-[13px] font-[400]">
                           {merchant.commision}%
@@ -553,6 +567,7 @@ const MerchantManagement = ({ authorization, showSidebar, setAuthorization }) =>
                                 setMerchantWebsite(merchant.merchantWebsite);
                                 setTax(merchant.commision);
                                 setPayoutCommision(merchant.payoutCommision);
+                                setDailyMerchantLimit(merchant.dailyMerchantLimit);
                                 setOpen(true);
                               }}
                             >
